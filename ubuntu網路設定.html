@@ -1,0 +1,173 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ubuntu網路設定</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#ubuntu-24.04-網路設定">Ubuntu 24.04 網路設定</a>
+<ul>
+<li><a href="#確認網卡名稱">確認網卡名稱</a></li>
+<li><a href="#編輯-netplan-設定檔">編輯 Netplan 設定檔</a></li>
+<li><a href="#靜態-ip-設定範例（推薦用-routes）">靜態 IP 設定範例（推薦用 routes）</a></li>
+<li><a href="#套用設定">套用設定</a></li>
+<li><a href="#驗證網路狀態">驗證網路狀態</a></li>
+<li><a href="#啟用-ssh-遠端連線（若尚未安裝）">啟用 SSH 遠端連線（若尚未安裝）</a></li>
+<li><a href="#🛠️-netplan-實用功能與指令一覽">🛠️ Netplan 實用功能與指令一覽</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="ubuntu-24.04-網路設定"><span class="prefix"></span><span class="content">Ubuntu 24.04 網路設定</span><span class="suffix"></span></h1>
+<h2 id="確認網卡名稱"><span class="prefix"></span><span class="content">確認網卡名稱</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">ip a
+<span class="token comment">#等同ip addr show</span>
+<span class="token comment">#常見名稱如 `enpXsY`、`eth0`、`ens33` 等</span>
+</code></pre>
+<h2 id="編輯-netplan-設定檔"><span class="prefix"></span><span class="content">編輯 Netplan 設定檔</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> <span class="token function">nano</span> /etc/netplan/50-cloud-init.yaml
+
+</code></pre>
+<h3 id="📁-netplan-設定檔案命名一覽（ubuntu-24.04）"><span class="prefix"></span><span class="content">📁 Netplan 設定檔案命名一覽（Ubuntu 24.04）</span><span class="suffix"></span></h3>
+
+<table>
+<thead>
+<tr>
+<th>檔名範例</th>
+<th>出現情境</th>
+<th>備註</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>50-cloud-init.yaml</code></td>
+<td>使用 cloud-init 部署的 Server</td>
+<td>常見於 VM、自動化安裝</td>
+</tr>
+<tr>
+<td><code>00-installer-config.yaml</code></td>
+<td>手動安裝或未啟用 cloud-init</td>
+<td>桌面版或裸機安裝常見</td>
+</tr>
+<tr>
+<td><code>01-netcfg.yaml</code></td>
+<td>自訂或手動建立的設定檔</td>
+<td>可自命名，優先度高</td>
+</tr>
+<tr>
+<td><code>99-custom.yaml</code></td>
+<td>使用者自訂的 override 設定</td>
+<td>可用於覆蓋預設設定</td>
+</tr>
+</tbody>
+</table><blockquote>
+<p>ℹ️ Netplan 會依檔名排序執行設定，數字越小優先度越高。<br>
+若有多份設定檔可能會互相覆寫，建議只保留主要檔案或明確規劃優先序。</p>
+</blockquote>
+<h2 id="靜態-ip-設定範例（推薦用-routes）"><span class="prefix"></span><span class="content">靜態 IP 設定範例（推薦用 routes）</span><span class="suffix"></span></h2>
+<pre class=" language-yaml"><code class="prism  language-yaml"><span class="token key atrule">network</span><span class="token punctuation">:</span>
+  <span class="token key atrule">version</span><span class="token punctuation">:</span> <span class="token number">2  </span><span class="token comment"># 設定格式版本，目前僅支援 2</span>
+  <span class="token key atrule">renderer</span><span class="token punctuation">:</span> networkd  <span class="token comment"># 使用 systemd-networkd 作為網路後端（適用 Server/雲端環境）</span>
+
+  <span class="token key atrule">ethernets</span><span class="token punctuation">:</span>
+    <span class="token key atrule">enp2s0</span><span class="token punctuation">:</span>  <span class="token comment"># 實體網卡名稱，視系統實際網卡名而定</span>
+      <span class="token key atrule">dhcp4</span><span class="token punctuation">:</span> no  <span class="token comment"># 停用 DHCPv4，自行手動設定 IP</span>
+      <span class="token key atrule">addresses</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> 192.168.99.7/24  <span class="token comment"># 指定靜態 IPv4 位址與子網遮罩（CIDR 表示法）</span>
+      <span class="token key atrule">routes</span><span class="token punctuation">:</span>
+        <span class="token punctuation">-</span> <span class="token key atrule">to</span><span class="token punctuation">:</span> default  <span class="token comment"># 設定預設路由（即「通往其他網段的出口」）</span>
+          <span class="token key atrule">via</span><span class="token punctuation">:</span> 192.168.99.1  <span class="token comment"># 指定閘道 IP，通常為網路中的 router 或 DHCP server</span>
+      <span class="token key atrule">nameservers</span><span class="token punctuation">:</span>
+        <span class="token key atrule">addresses</span><span class="token punctuation">:</span>
+          <span class="token punctuation">-</span> 8.8.8.8  <span class="token comment"># DNS 伺服器（Google DNS）</span>
+          <span class="token punctuation">-</span> 1.1.1.1  <span class="token comment"># DNS 伺服器（Cloudflare DNS）</span>
+</code></pre>
+<h2 id="套用設定"><span class="prefix"></span><span class="content">套用設定</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> netplan apply
+</code></pre>
+<ul>
+<li>或是   &lt;可在 120 秒內測試設定，失敗會自動回復&gt;</li>
+</ul>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> netplan try
+</code></pre>
+<h2 id="驗證網路狀態"><span class="prefix"></span><span class="content">驗證網路狀態</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">ip a           <span class="token comment"># 檢查 IP</span>
+ip route       <span class="token comment"># 檢查 default route</span>
+<span class="token function">ping</span> 8.8.8.8   <span class="token comment"># 測試外網</span>
+<span class="token function">ping</span> google.com <span class="token comment"># 測試 DNS</span>
+
+</code></pre>
+<h2 id="啟用-ssh-遠端連線（若尚未安裝）"><span class="prefix"></span><span class="content">啟用 SSH 遠端連線（若尚未安裝）</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> apt <span class="token function">install</span> openssh-server
+<span class="token function">sudo</span> systemctl <span class="token function">enable</span> <span class="token function">ssh</span>
+<span class="token function">sudo</span> systemctl start <span class="token function">ssh</span>
+
+</code></pre>
+<h2 id="🛠️-netplan-實用功能與指令一覽"><span class="prefix"></span><span class="content">🛠️ Netplan 實用功能與指令一覽</span><span class="suffix"></span></h2>
+
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th>工具或指令</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>多 IP 設定</td>
+<td><code>addresses: [...]</code></td>
+<td>支援多個 IP</td>
+</tr>
+<tr>
+<td>多路由設定</td>
+<td><code>routes:</code> + <code>metric:</code></td>
+<td>控制優先順序</td>
+</tr>
+<tr>
+<td>DNS 搜尋域</td>
+<td><code>search: [example.com]</code></td>
+<td>補全主機名</td>
+</tr>
+<tr>
+<td>YAML 檢查工具</td>
+<td><code>yamllint /etc/netplan/*.yaml</code></td>
+<td>檢查語法錯誤</td>
+</tr>
+</tbody>
+</table><blockquote>
+<p>📌 可搭配 <code>netplan apply</code>、<code>netplan try</code> 及 <code>ip a</code>、<code>ip route</code> 等指令進行驗證與除錯。</p>
+</blockquote>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,76 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>mount_nas.sh.md</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#mount_nas.sh-說明文件">mount_nas.sh 說明文件</a>
+<ul>
+<li><a href="#📜-腳本內容說明-mount_nas.sh">📜 腳本內容說明 mount_nas.sh</a></li>
+<li><a href="#建議將此腳本權限設為只有自己可讀寫執行">建議將此腳本權限設為只有自己可讀寫執行</a></li>
+</ul>
+</li>
+<li><a href="#gear查詢使用者可掛載的目錄清單">⚙️查詢使用者可掛載的目錄清單</a></li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="mount_nas.sh-說明文件"><span class="prefix"></span><span class="content">mount_nas.sh 說明文件</span><span class="suffix"></span></h1>
+<p>此腳本用於掛載遠端 NAS 網路磁碟至本機的 <code>/mnt/nas_share</code> 目錄。使用者在執行時會被提示輸入帳號與密碼，並在掛載完成後顯示目前的磁碟使用情況。</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#編輯建立.sh檔</span>
+deltawen@esprotaubuntu:~$ <span class="token function">vi</span> mount_nas.sh
+</code></pre>
+<h2 id="📜-腳本內容說明-mount_nas.sh"><span class="prefix"></span><span class="content">📜 腳本內容說明 mount_nas.sh</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">
+<span class="token comment">#!/bin/bash</span>
+<span class="token comment">#建立資料夾</span>
+<span class="token function">mkdir</span> -p /mnt:/nas_share
+<span class="token comment">#顯示使用者輸入資料</span>
+<span class="token function">read</span> -p <span class="token string">"請輸入使用者名稱: "</span> username
+<span class="token function">read</span> -s -p <span class="token string">"請輸入密碼: "</span> password
+<span class="token comment">#輸入還密碼後換行</span>
+<span class="token keyword">echo</span> <span class="token string">""</span>
+<span class="token comment">#掛載指令</span>
+<span class="token function">sudo</span> <span class="token function">mount</span> -t cifs //172.27.2.111/目錄名稱 /mnt/nas_share -o username<span class="token operator">=</span><span class="token variable">$username</span>,password<span class="token operator">=</span><span class="token variable">$password</span>,workgroup<span class="token operator">=</span>WORKGROUP,iocharset<span class="token operator">=</span>utf8,file_mode<span class="token operator">=</span>0777,dir_mode<span class="token operator">=</span>0777
+<span class="token comment">#顯示磁碟掛載情形</span>
+<span class="token function">df</span> -h
+</code></pre>
+<h2 id="建議將此腳本權限設為只有自己可讀寫執行"><span class="prefix"></span><span class="content">建議將此腳本權限設為只有自己可讀寫執行</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">chmod</span> 700 mount_nas.sh
+
+</code></pre>
+<h1 id="gear查詢使用者可掛載的目錄清單"><span class="prefix"></span><span class="content">⚙️查詢使用者可掛載的目錄清單</span><span class="suffix"></span></h1>
+<pre class=" language-bash"><code class="prism  language-bash">smbclient -L //172.27.2.111 -U ME-Delta
+</code></pre>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
