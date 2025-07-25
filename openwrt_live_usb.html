@@ -1,0 +1,96 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>openwrt_live_usb</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#openwrt-系統製作安裝">openwrt 系統製作安裝</a></li>
+<li><a href="#系統安裝完成">系統安裝完成</a></li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="openwrt-系統製作安裝"><span class="prefix"></span><span class="content">openwrt 系統製作安裝</span><span class="suffix"></span></h1>
+<ol>
+<li>到openwrt庫下載對應型號</li>
+</ol>
+<blockquote>
+<p>這裡用x86_x64版本</p>
+<blockquote>
+<p><a href="https://firmware-selector.openwrt.org/">https://firmware-selector.openwrt.org/</a></p>
+</blockquote>
+</blockquote>
+<ol start="2">
+<li>整合首次啟動時執行的指令碼 (uci-defaults)進img</li>
+</ol>
+<blockquote>
+<p>在首次啟動時執行的指令碼欄位輸入區網自訂IP</p>
+<blockquote>
+<p>這裡以192.168.99.5/24為例</p>
+</blockquote>
+</blockquote>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#設定lan IP</span>
+uci <span class="token keyword">set</span> network.lan.ipaddr<span class="token operator">=</span><span class="token string">'192.168.99.5'</span>
+
+<span class="token comment">#將設定永久寫進文件</span>
+uci commit network
+
+<span class="token comment">#重啟網路服務</span>
+/etc/init.d/network restart
+</code></pre>
+<ol start="3">
+<li>點選要求建製紐後下載img</li>
+<li>燒錄img進usb</li>
+</ol>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> <span class="token function">dd</span> if<span class="token operator">=</span>openwrt-24.10.2-30ec32c3854d-x86-64-generic-ext4-combined-efi.img of<span class="token operator">=</span>/dev/sdx bs<span class="token operator">=</span>4M status<span class="token operator">=</span>progress oflag<span class="token operator">=</span>sync
+
+
+
+＃sudo: 以管理者權限執行該命令。
+＃dd: 用於複製和轉換檔案的命令行工具。
+＃if<span class="token operator">=</span>openwrt-24.10.2-30ec32c3854d-x86-64-generic-ext4-combined-efi.img: 指定輸入檔案，這裡是您的 OpenWrt 映像檔。
+＃of<span class="token operator">=</span>/dev/sdx: 指定輸出檔案，請將 /dev/sdx 替換為您實際的目標裝置名稱！
+＃bs<span class="token operator">=</span>4M: 設定區塊大小為 4MB，這通常是一個較好的傳輸效率設定。
+＃status<span class="token operator">=</span>progress: 在複製過程中顯示進度。
+＃oflag<span class="token operator">=</span>sync: 強制將所有寫入操作同步到磁碟，這可以提高資料寫入的可靠性，但可能會稍微降低速度。
+
+
+
+</code></pre>
+<h1 id="系統安裝完成"><span class="prefix"></span><span class="content">系統安裝完成</span><span class="suffix"></span></h1>
+<ul>
+<li>插入電腦開機</li>
+<li>從同區網電腦網頁輸入192.168.99.5即可進入設定界面</li>
+</ul>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
