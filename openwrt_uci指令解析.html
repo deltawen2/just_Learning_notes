@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>openwrt_uci指令解析</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#🌐-uci-指令-修改-openwrt-靜態-ip">🌐 uci 指令 修改 OpenWrt 靜態 IP</a>
+<ul>
+<li><a href="#🧠-指令解析">🧠 指令解析</a></li>
+<li><a href="#❓-如何確認-interface-區塊順序">❓ 如何確認 interface 區塊順序</a></li>
+<li><a href="#✅-完成修改後的步驟">✅ 完成修改後的步驟</a></li>
+<li><a href="#🔍-延伸建議（選用）">🔍 延伸建議（選用）</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="🌐-uci-指令-修改-openwrt-靜態-ip"><span class="prefix"></span><span class="content">🌐 uci 指令 修改 OpenWrt 靜態 IP</span><span class="suffix"></span></h1>
+<h2 id="🧠-指令解析"><span class="prefix"></span><span class="content">🧠 指令解析</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">uci <span class="token keyword">set</span> network.@interface<span class="token punctuation">[</span>1<span class="token punctuation">]</span>.ipaddr<span class="token operator">=</span><span class="token string">'192.168.99.2'</span>
+</code></pre>
+<ul>
+<li>
+<p><code>network</code>：表示修改 <code>/etc/config/network</code> 設定檔</p>
+</li>
+<li>
+<p><code>@interface[1]</code>：挑選第 2 個 <code>config interface</code> 區塊（因為索引從 0 開始）</p>
+</li>
+<li>
+<p><code>ipaddr='192.168.99.2'</code>：設定該介面的靜態 IPv4 位址為 192.168.99.2</p>
+</li>
+</ul>
+<h2 id="❓-如何確認-interface-區塊順序"><span class="prefix"></span><span class="content">❓ 如何確認 interface 區塊順序</span><span class="suffix"></span></h2>
+<p>使用以下指令查看：</p>
+<pre class=" language-bash"><code class="prism  language-bash">uci show network <span class="token operator">|</span> <span class="token function">grep</span> <span class="token string">'=interface'</span>
+</code></pre>
+<p>範例輸出可能是：</p>
+<pre class=" language-bash"><code class="prism  language-bash">network.lan<span class="token operator">=</span>interface
+network.wan<span class="token operator">=</span>interface
+network.wg0<span class="token operator">=</span>interface
+</code></pre>
+<p>✅ 若你確定要改的是 <code>lan</code> 接口，可以直接這樣寫：</p>
+<pre class=" language-bash"><code class="prism  language-bash">uci <span class="token keyword">set</span> network.lan.ipaddr<span class="token operator">=</span><span class="token string">'192.168.99.2'</span>
+</code></pre>
+<p>這樣語意清楚，也不怕索引順序變動造成誤改</p>
+<h2 id="✅-完成修改後的步驟"><span class="prefix"></span><span class="content">✅ 完成修改後的步驟</span><span class="suffix"></span></h2>
+<ol>
+<li>儲存設定變更：</li>
+</ol>
+<pre class=" language-bash"><code class="prism  language-bash">uci commit network
+</code></pre>
+<ol start="2">
+<li>重新啟動網路：</li>
+</ol>
+<pre class=" language-bash"><code class="prism  language-bash">/etc/init.d/network restart
+</code></pre>
+<blockquote>
+<p>📌 注意：此步驟可能會讓裝置 IP 改變，導致 SSH/web UI 斷線，建議從本地 console 操作，或先設好 fallback gateway</p>
+</blockquote>
+<h2 id="🔍-延伸建議（選用）"><span class="prefix"></span><span class="content">🔍 延伸建議（選用）</span><span class="suffix"></span></h2>
+<p>你可以一併調整以下項目：</p>
+<pre class=" language-bash"><code class="prism  language-bash">uci <span class="token keyword">set</span> network.lan.netmask<span class="token operator">=</span><span class="token string">'255.255.255.0'</span>         <span class="token comment"># 子網遮罩</span>
+uci <span class="token keyword">set</span> network.lan.gateway<span class="token operator">=</span><span class="token string">'192.168.99.1'</span>          <span class="token comment"># 預設 gateway</span>
+uci <span class="token keyword">set</span> network.lan.broadcast<span class="token operator">=</span><span class="token string">'192.168.99.255'</span>      <span class="token comment"># 廣播位址（可選）</span>
+uci <span class="token keyword">set</span> network.lan.ip6assign<span class="token operator">=</span><span class="token string">'64'</span>                  <span class="token comment"># IPv6 prefix（若需要）</span>
+</code></pre>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
