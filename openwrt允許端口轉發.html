@@ -1,0 +1,56 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>openwrt允許端口轉發</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#docker-配上openwrt-要開端口轉發">docker 配上openwrt 要開端口轉發</a></li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="docker-配上openwrt-要開端口轉發"><span class="prefix"></span><span class="content">docker 配上openwrt 要開端口轉發</span><span class="suffix"></span></h1>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">vi</span> /etc/config/firewall
+</code></pre>
+<pre class=" language-yaml"><code class="prism  language-yaml">config defaults
+
+option syn_flood 1
+
+option input REJECT
+
+option output ACCEPT
+
+option forward ACCEPT <span class="token comment"># 改成同意ACCEPT</span>
+</code></pre>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
