@@ -1,0 +1,22 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>docker 容器操作指令</title>
+  <link rel="stylesheet" href="https://stackedit.net/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__html"><h1 id="docker-容器操作"><span class="prefix"></span><span class="content">docker 容器操作</span><span class="suffix"></span></h1>
+<pre class=" language-sh"><code class="prism  language-sh">deltawen@wensever:~$ sudo docker exec -it ollama ollama list
+NAME          ID              SIZE     MODIFIED   
+gemma3:27b    a418f5838eaf    17 GB    2 days ago    
+deltawen@wensever:~$ sudo docker exec -it ollama ollama run gemma3:27b
+
+</code></pre>
+</div>
+</body>
+
+</html>
