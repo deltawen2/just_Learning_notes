@@ -5,4 +5,5 @@
 ## [openwrt_live_usb](https://deltawen2.github.io/just_Learning_notes/openwrt_live_usb.html)
 ## [openwrt允許端口轉發](https://deltawen2.github.io/just_Learning_notes/openwrt允許端口轉發.html)
 ## [docker容器操作指令](https://deltawen2.github.io/just_Learning_notes/docker容器操作指令.html)
+## [dd指令](https://deltawen2.github.io/just_Learning_notes/dd指令.html)
 
