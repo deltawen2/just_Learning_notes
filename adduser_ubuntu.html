@@ -1,0 +1,138 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>adduser_ubuntu</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#如何在-ubuntu-24.04-中新增一般使用者-omagawen-並加入-sudo-群組">如何在 Ubuntu 24.04 中新增一般使用者 omagawen 並加入 sudo 群組</a>
+<ul>
+<li><a href="#步驟一：開啟終端機">步驟一：開啟終端機</a></li>
+<li><a href="#步驟二：新增使用者帳號-omagawen">步驟二：新增使用者帳號 omagawen</a></li>
+<li><a href="#步驟三：將-omagawen-加入-sudo-群組">步驟三：將 omagawen 加入 sudo 群組</a></li>
+<li><a href="#步驟四：驗證-omagawen-是否已成功加入-sudo-群組">步驟四：驗證 omagawen 是否已成功加入 sudo 群組</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="如何在-ubuntu-24.04-中新增一般使用者-omagawen-並加入-sudo-群組"><span class="prefix"></span><span class="content">如何在 Ubuntu 24.04 中新增一般使用者 <code>omagawen</code> 並加入 <code>sudo</code> 群組</span><span class="suffix"></span></h1>
+<blockquote>
+<p>這是一個詳細的步驟指南<br>
+Ubuntu 24.04 系統中新增一個名為 <code>omagawen</code> 的使用者，並賦予他執行管理員指令（<code>sudo</code>）的權限。</p>
+</blockquote>
+<h2 id="步驟一：開啟終端機"><span class="prefix"></span><span class="content">步驟一：開啟終端機</span><span class="suffix"></span></h2>
+<h2 id="步驟二：新增使用者帳號-omagawen"><span class="prefix"></span><span class="content">步驟二：新增使用者帳號 <code>omagawen</code></span><span class="suffix"></span></h2>
+<ul>
+<li>使用 <code>adduser</code> 指令來新增使用者。這個指令會引導你設定新使用者的密碼和一些基本資訊。</li>
+</ul>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> adduser omagawen
+</code></pre>
+<p>執行此指令後，系統會要求你輸入當前擁有 <code>sudo</code> 權限的使用者（例如你的 <code>deltawen</code> 帳號）的密碼。輸入密碼後，請按照提示完成以下步驟：</p>
+<ol>
+<li>
+<p><strong>設定新密碼：</strong> 系統會提示你為 <code>omagawen</code> 設定新密碼。請輸入一個至少 8 個字元長度的強密碼，然後再次輸入以確認。</p>
+<pre class=" language-bash"><code class="prism  language-bash">New password:
+Retype new password:
+</code></pre>
+</li>
+</ol>
+<ul>
+<li>如果密碼太短，系統會提示 <code>BAD PASSWORD: The password is shorter than 8 characters</code>，請重新輸入符合要求的密碼</li>
+</ul>
+<ol start="2">
+<li>
+<p><strong>輸入使用者資訊（選填）：</strong> 系統會詢問一些關於 <code>omagawen</code> 的個人資訊，例如全名、房間號碼、電話等。這些都是選填的，如果你不需要填寫，可以直接按 <code>Enter</code> 跳過。</p>
+<pre class=" language-bash"><code class="prism  language-bash">Changing the user information <span class="token keyword">for</span> omagawen
+Enter the new value, or press ENTER <span class="token keyword">for</span> the default
+    Full Name <span class="token punctuation">[</span><span class="token punctuation">]</span>:
+    Room Number <span class="token punctuation">[</span><span class="token punctuation">]</span>:
+    Work Phone <span class="token punctuation">[</span><span class="token punctuation">]</span>:
+    Home Phone <span class="token punctuation">[</span><span class="token punctuation">]</span>:
+    Other <span class="token punctuation">[</span><span class="token punctuation">]</span>:
+</code></pre>
+</li>
+<li>
+<p><strong>確認資訊：</strong> 最後，系統會要求你確認所有輸入的資訊是否正確。輸入 <code>y</code> 然後按 <code>Enter</code> 即可確認。</p>
+<pre><code>Is the information correct? [Y/n] y
+</code></pre>
+</li>
+</ol>
+<p>完成這些步驟後，<code>omagawen</code> 這個使用者帳號就已經成功建立，並擁有自己的家目錄 (<code>/home/omagawen</code>)。</p>
+<h2 id="步驟三：將-omagawen-加入-sudo-群組"><span class="prefix"></span><span class="content">步驟三：將 <code>omagawen</code> 加入 <code>sudo</code> 群組</span><span class="suffix"></span></h2>
+<p>為了讓 <code>omagawen</code> 能夠執行 <code>sudo</code> 指令，你需要將他加入到 <code>sudo</code> 群組。請確保你當前是以擁有 <code>sudo</code> 權限的帳號（例如 <code>deltawen</code>）來執行這個指令。</p>
+<p>Bash</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> <span class="token function">usermod</span> -aG <span class="token function">sudo</span> omagawen
+</code></pre>
+<ul>
+<li>
+<p><strong><code>sudo</code></strong>: 以管理員權限執行指令。</p>
+</li>
+<li>
+<p><strong><code>usermod</code></strong>: 用於修改使用者帳號的指令。</p>
+</li>
+<li>
+<p><strong><code>-aG sudo</code></strong>: <code>-a</code> 表示追加（append），<code>-G</code> 表示指定群組。這會將 <code>omagawen</code> 加入到 <code>sudo</code> 群組，而不會移除他原有的群組。</p>
+</li>
+<li>
+<p><strong><code>omagawen</code></strong>: 你要加入群組的使用者名稱。</p>
+</li>
+</ul>
+<p>執行這個指令後，系統會要求你輸入當前使用者的密碼（例如 <code>deltawen</code> 的密碼）。</p>
+<h2 id="步驟四：驗證-omagawen-是否已成功加入-sudo-群組"><span class="prefix"></span><span class="content">步驟四：驗證 <code>omagawen</code> 是否已成功加入 <code>sudo</code> 群組</span><span class="suffix"></span></h2>
+<p>你可以透過以下指令來確認 <code>omagawen</code> 是否已擁有 <code>sudo</code> 權限：</p>
+<ol>
+<li>
+<p><strong>登出並重新登入 <code>omagawen</code> 帳號：</strong> 為了讓群組變更生效，你必須讓 <code>omagawen</code> 登出當前會話，然後再重新登入。</p>
+</li>
+<li>
+<p><strong>以 <code>omagawen</code> 身份執行 <code>id</code> 指令：</strong> 登入 <code>omagawen</code> 帳號後，打開終端機，執行：</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">id</span> omagawen
+</code></pre>
+<p>在輸出結果中，你應該會看到 <code>sudo</code> 出現在 <code>groups=</code> 的列表中，例如：</p>
+<pre><code>uid=1001(omagawen) gid=1001(omagawen) groups=1001(omagawen),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),120(lpadmin),131(lxd),132(sambashare)
+</code></pre>
+<p>（注意 <code>sudo</code> 群組的存在）</p>
+</li>
+<li>
+<p><strong>以 <code>omagawen</code> 身份測試 <code>sudo</code> 指令：</strong></p>
+<p>Bash</p>
+<pre><code>sudo apt update
+</code></pre>
+<p>如果一切設定正確，這次系統會要求你輸入 <code>omagawen</code> 的密碼，然後成功執行 <code>apt update</code>。</p>
+</li>
+</ol>
+<hr>
+<p>完成以上步驟後，你就在 Ubuntu 24.04 中成功新增了 <code>omagawen</code> 這個使用者，並賦予了他執行管理員指令的權限。</p>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>adduser_openwrt.md</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#新增root權限使用者deltawen">新增root權限使用者deltawen</a>
+<ul>
+<li><a href="#編輯-etcpasswd">編輯 /etc/passwd</a></li>
+<li><a href="#編輯-etcshadow（加入空密碼或自行設定）">編輯 /etc/shadow（加入空密碼或自行設定）</a></li>
+<li><a href="#建立-home-目錄">建立 home 目錄</a></li>
+<li><a href="#建立密碼">建立密碼</a></li>
+</ul>
+</li>
+<li><a href="#新增一般使用者omagawen">新增一般使用者omagawen</a>
+<ul>
+<li><a href="#編輯-etcpasswd-1">編輯 /etc/passwd</a></li>
+<li><a href="#編輯-etcshadow（加入空密碼或自行設定）-1">編輯 /etc/shadow（加入空密碼或自行設定）</a></li>
+<li><a href="#建立-home-目錄並設權限">建立 home 目錄並設權限</a></li>
+<li><a href="#確認群組設定（可選）">確認群組設定（可選）</a></li>
+<li><a href="#建立密碼-1">建立密碼</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="新增root權限使用者deltawen"><span class="prefix"></span><span class="content">新增root權限使用者deltawen</span><span class="suffix"></span></h1>
+<h2 id="編輯-etcpasswd"><span class="prefix"></span><span class="content">編輯 <code>/etc/passwd</code></span><span class="suffix"></span></h2>
+<blockquote>
+<p><code>echo 'deltawen:x:0:0:deltawen:/home/deltawen:/bin/ash' &gt;&gt; /etc/passwd</code></p>
+</blockquote>
+<h2 id="編輯-etcshadow（加入空密碼或自行設定）"><span class="prefix"></span><span class="content">編輯 <code>/etc/shadow</code>（加入空密碼或自行設定）</span><span class="suffix"></span></h2>
+<blockquote>
+<p><code>echo 'deltawen::0:0:99999:7:::' &gt;&gt; /etc/shadow</code></p>
+</blockquote>
+<h2 id="建立-home-目錄"><span class="prefix"></span><span class="content">建立 home 目錄</span><span class="suffix"></span></h2>
+<blockquote>
+<p><code>mkdir -p /home/deltawen</code><br>
+<code>chown 0:0 /home/deltawen</code></p>
+</blockquote>
+<h2 id="建立密碼"><span class="prefix"></span><span class="content">建立密碼</span><span class="suffix"></span></h2>
+<blockquote>
+<p><code>passwd deltawen</code></p>
+</blockquote>
+<h1 id="新增一般使用者omagawen"><span class="prefix"></span><span class="content">新增一般使用者omagawen</span><span class="suffix"></span></h1>
+<h2 id="編輯-etcpasswd-1"><span class="prefix"></span><span class="content">編輯 <code>/etc/passwd</code></span><span class="suffix"></span></h2>
+<blockquote>
+<p><code>echo 'omagawen:x:1000:1000:omagawen:/home/omagawen:/bin/ash' &gt;&gt; /etc/passwd</code></p>
+</blockquote>
+<h2 id="編輯-etcshadow（加入空密碼或自行設定）-1"><span class="prefix"></span><span class="content">編輯 <code>/etc/shadow</code>（加入空密碼或自行設定）</span><span class="suffix"></span></h2>
+<blockquote>
+<p><code>echo 'omagawen::0:0:99999:7:::' &gt;&gt; /etc/shadow</code></p>
+</blockquote>
+<h2 id="建立-home-目錄並設權限"><span class="prefix"></span><span class="content">建立 home 目錄並設權限</span><span class="suffix"></span></h2>
+<blockquote>
+<p><code>mkdir -p /home/omagawen</code><br>
+<code>chown 1000:1000 /home/omagawen</code></p>
+</blockquote>
+<h2 id="確認群組設定（可選）"><span class="prefix"></span><span class="content">確認群組設定（可選）</span><span class="suffix"></span></h2>
+<blockquote>
+<p><code>echo 'omagawen:x:1000:' &gt;&gt; /etc/group</code></p>
+</blockquote>
+<h2 id="建立密碼-1"><span class="prefix"></span><span class="content">建立密碼</span><span class="suffix"></span></h2>
+<blockquote>
+<p><code>passwd omagawen</code></p>
+</blockquote>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
