@@ -1,6 +1,6 @@
 # 只是學習雜記<就是雜魚>
 ## Openwrt Ubuntu 通用
-> [mount_nas.sh.md.html](https://deltawen2.github.io/just_Learning_notes/mount_nas.sh.md.html)
+> [mount_nas](https://deltawen2.github.io/just_Learning_notes/mount_nas.sh.md.html)
 
 > [dd指令](https://deltawen2.github.io/just_Learning_notes/dd指令.html)
 
