@@ -31,6 +31,7 @@
 <li><a href="#🧠-基本語法">🧠 基本語法</a></li>
 <li><a href="#🧪-常見用途與範例">🧪 常見用途與範例</a></li>
 <li><a href="#🧪-性能測試範例">🧪 性能測試範例</a></li>
+<li><a href="#備份到別台電腦">備份到別台電腦</a></li>
 </ul>
 </li>
 </ul>
@@ -71,6 +72,48 @@
 <h3 id="🔸-測試讀取速度"><span class="prefix"></span><span class="content">🔸 測試讀取速度</span><span class="suffix"></span></h3>
 <pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span>testfile of<span class="token operator">=</span>/dev/null bs<span class="token operator">=</span>1G
 </code></pre>
+<h2 id="備份到別台電腦"><span class="prefix"></span><span class="content">備份到別台電腦</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span>/dev/zero bs<span class="token operator">=</span>4M count<span class="token operator">=</span>250 iflag<span class="token operator">=</span>fullblock <span class="token operator">|</span> <span class="token function">ssh</span> deltawen@192.168.99.7 <span class="token string">"dd of=/dev/shm/testfile bs=4M conv=fdatasync"</span>
+</code></pre>
+<blockquote>
+<p>這串指令做了以下事情：</p>
+</blockquote>
+<ol>
+<li>在本機產生 1GB 的零值資料（全 0 bit）</li>
+<li>經由 SSH 傳送到遠端主機（192.168.99.7）</li>
+<li>在遠端寫入到 <code>/dev/shm/testfile</code>（RAM-based filesystem）</li>
+<li>確保寫入完成後資料 flush 到裝置（雖然是 RAM）</li>
+</ol>
+<h3 id="分段解析-本機"><span class="prefix"></span><span class="content">分段解析 本機</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span>/dev/zero bs<span class="token operator">=</span>4M count<span class="token operator">=</span>250 iflag<span class="token operator">=</span>fullblock
+</code></pre>
+<ul>
+<li><code>if=/dev/zero</code>：讀取來源資料，全都是零值</li>
+<li><code>bs=4M</code>：每個 block 是 4MB</li>
+<li><code>count=250</code>：共產生 250 個 blocks → 4MB × 250 = <strong>1GB</strong></li>
+<li><code>iflag=fullblock</code>：這很關鍵，確保每次讀滿 block（避免 partial read 警告）<br>
+🔸 若沒加 <code>iflag=fullblock</code>，有可能只讀到部分資料（例如 32KB），造成傳送失敗。</li>
+</ul>
+<h3 id="傳送過程"><span class="prefix"></span><span class="content">傳送過程</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token operator">|</span> <span class="token function">ssh</span> deltawen@192.168.99.7 <span class="token punctuation">..</span>.
+</code></pre>
+<h3 id="遠端執行部分："><span class="prefix"></span><span class="content">遠端執行部分：</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> of<span class="token operator">=</span>/dev/shm/testfile bs<span class="token operator">=</span>4M conv<span class="token operator">=</span>fdatasync
+</code></pre>
+<ul>
+<li>
+<p><code>of=/dev/shm/testfile</code>：寫入到遠端 RAM disk</p>
+</li>
+<li>
+<p><code>bs=4M</code>：一次寫入 4MB chunk</p>
+</li>
+<li>
+<p><code>conv=fdatasync</code>：確保資料 flush 到裝置（在 <code>/dev/shm</code> 中，就是記憶體）</p>
+<ul>
+<li>雖然是 RAM，<code>fdatasync</code> 確保寫入程序完整結束，可作為資料一致性保證</li>
+</ul>
+</li>
+</ul>
 
       </div>
     </div>
