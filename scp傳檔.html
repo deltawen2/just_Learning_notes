@@ -80,9 +80,9 @@ OpenWrt 的 IP 是 <code>192.168.1.1</code><br>
 <pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#傳送檔案</span>
 <span class="token function">scp</span> /path/to/your/local/file.txt root@192.168.1.1:/path/on/openwrt/
 <span class="token comment">#接收檔案</span>
-<span class="token function">scp</span> root@1992.168.1.1:/path/on/openwrt/file.txt /path/to/your/local/
-<span class="token comment">#接收到當前目錄接收目錄就用.</span>
-<span class="token function">scp</span> root@1992.168.1.1:/path/on/openwrt/file.txt <span class="token keyword">.</span>
+<span class="token function">scp</span> root@192.168.1.1:/path/on/openwrt/file.txt /path/to/your/local/
+<span class="token comment">#接收到當前目錄就用.</span>
+<span class="token function">scp</span> root@192.168.1.1:/path/on/openwrt/file.txt <span class="token keyword">.</span>
 
 </code></pre>
 
