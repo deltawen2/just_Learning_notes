@@ -4,6 +4,8 @@
 
 > [dd指令](https://deltawen2.github.io/just_Learning_notes/dd指令.html)
 
+>[scp傳檔](https://deltawen2.github.io/just_Learning_notes/scp傳檔.html)
+
 ## openwrt
 > [openwrt_live_usb](https://deltawen2.github.io/just_Learning_notes/openwrt_live_usb.html)
 
