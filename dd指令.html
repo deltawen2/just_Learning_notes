@@ -1,0 +1,80 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dd指令</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#dd-是-linux-中非常強大的低階資料處理工具，常用於磁碟備份、映像製作、資料轉換等。以下是完整的說明與範例：">dd 是 Linux 中非常強大的低階資料處理工具，常用於磁碟備份、映像製作、資料轉換等。以下是完整的說明與範例：</a>
+<ul>
+<li><a href="#🧠-基本語法">🧠 基本語法</a></li>
+<li><a href="#🧪-常見用途與範例">🧪 常見用途與範例</a></li>
+<li><a href="#🧪-性能測試範例">🧪 性能測試範例</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="dd-是-linux-中非常強大的低階資料處理工具，常用於磁碟備份、映像製作、資料轉換等。以下是完整的說明與範例："><span class="prefix"></span><span class="content"><code>dd</code> 是 Linux 中非常強大的低階資料處理工具，常用於磁碟備份、映像製作、資料轉換等。以下是完整的說明與範例：</span><span class="suffix"></span></h1>
+<hr>
+<h2 id="🧠-基本語法"><span class="prefix"></span><span class="content">🧠 基本語法</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span><span class="token operator">&lt;</span>來源<span class="token operator">&gt;</span> of<span class="token operator">=</span><span class="token operator">&lt;</span>目的<span class="token operator">&gt;</span> <span class="token punctuation">[</span>參數<span class="token punctuation">..</span>.<span class="token punctuation">]</span>
+</code></pre>
+<h2 id="🧪-常見用途與範例"><span class="prefix"></span><span class="content">🧪 常見用途與範例</span><span class="suffix"></span></h2>
+<h3 id="🔹-建立空白檔案（填充-0）"><span class="prefix"></span><span class="content">🔹 建立空白檔案（填充 0）</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span>/dev/zero of<span class="token operator">=</span>empty_100MB.bin bs<span class="token operator">=</span>1M count<span class="token operator">=</span>100
+</code></pre>
+<h3 id="🔹-建立隨機檔案（填充亂數）"><span class="prefix"></span><span class="content">🔹 建立隨機檔案（填充亂數）</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span>/dev/urandom of<span class="token operator">=</span>random_10MB.bin bs<span class="token operator">=</span>1M count<span class="token operator">=</span>10
+</code></pre>
+<h3 id="🔹-建立稀疏檔案（不實際佔空間）"><span class="prefix"></span><span class="content">🔹 建立稀疏檔案（不實際佔空間）</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span>/dev/zero of<span class="token operator">=</span>sparse_1GB.img bs<span class="token operator">=</span>1 count<span class="token operator">=</span>0 seek<span class="token operator">=</span>1G
+</code></pre>
+<h3 id="🔹-備份整顆硬碟"><span class="prefix"></span><span class="content">🔹 備份整顆硬碟</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span>/dev/sda of<span class="token operator">=</span>backup.img bs<span class="token operator">=</span>4M status<span class="token operator">=</span>progress
+</code></pre>
+<h3 id="🔹-回復硬碟映像"><span class="prefix"></span><span class="content">🔹 回復硬碟映像</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span>backup.img of<span class="token operator">=</span>/dev/sda bs<span class="token operator">=</span>4M status<span class="token operator">=</span>progress
+</code></pre>
+<h3 id="🔹-製作-bootable-usb"><span class="prefix"></span><span class="content">🔹 製作 bootable USB</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span>ubuntu.iso of<span class="token operator">=</span>/dev/sdb bs<span class="token operator">=</span>4M status<span class="token operator">=</span>progress
+</code></pre>
+<h2 id="🧪-性能測試範例"><span class="prefix"></span><span class="content">🧪 性能測試範例</span><span class="suffix"></span></h2>
+<h3 id="🔸-測試寫入速度"><span class="prefix"></span><span class="content">🔸 測試寫入速度</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span>/dev/zero of<span class="token operator">=</span>testfile bs<span class="token operator">=</span>1G count<span class="token operator">=</span>1 conv<span class="token operator">=</span>fdatasync
+</code></pre>
+<h3 id="🔸-測試讀取速度"><span class="prefix"></span><span class="content">🔸 測試讀取速度</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">dd</span> if<span class="token operator">=</span>testfile of<span class="token operator">=</span>/dev/null bs<span class="token operator">=</span>1G
+</code></pre>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
