@@ -1,0 +1,91 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ssh-keygen</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#ssh連線金鑰">SSH連線金鑰</a>
+<ul>
+<li><a href="#🛠-指令一：ssh-keygen--t-ed25519--c-deltawenclient">🛠 指令一：ssh-keygen -t ed25519 -C “deltawen@client”</a></li>
+<li><a href="#🚀-指令二：ssh-copy-id-root192.168.99.3">🚀 指令二：ssh-copy-id root@192.168.99.3</a></li>
+<li><a href="#直接在openwrt192.168.99.3上操作">直接在openwrt192.168.99.3上操作</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="ssh連線金鑰"><span class="prefix"></span><span class="content">SSH連線金鑰</span><span class="suffix"></span></h1>
+<pre class=" language-bash"><code class="prism  language-bash">ssh-keygen -t ed25519 -C <span class="token string">"deltawen@client"</span> 
+ssh-copy-id root@192.168.99.3
+</code></pre>
+<p>📌 好的，這兩行指令是設定 SSH 無密碼登入的常見流程，我來幫你拆解一下：</p>
+<hr>
+<h2 id="🛠-指令一：ssh-keygen--t-ed25519--c-deltawenclient"><span class="prefix"></span><span class="content">🛠 指令一：ssh-keygen -t ed25519 -C “deltawen@client”</span><span class="suffix"></span></h2>
+<p>這行是在 <strong>本機產生 SSH 金鑰</strong>，詳細意思如下：</p>
+<ul>
+<li><code>ssh-keygen</code>：這是產生金鑰的指令。</li>
+<li><code>-t ed25519</code>：指定金鑰類型為 <code>ed25519</code>，這是一種現代、快速且安全的加密方式（比 RSA 更短更安全，推薦使用）。</li>
+<li><code>-C "deltawen@client"</code>：加上註解，通常用來識別該金鑰用途或屬於誰。在 <code>.ssh/id_ed25519.pub</code> 的最後會看到這段。</li>
+</ul>
+<p>⏱ 執行後會提示你要不要指定金鑰存放位置與密碼，如果一路按 Enter，金鑰會預設儲存在：</p>
+<pre class=" language-bash"><code class="prism  language-bash">~/.ssh/id_ed25519           <span class="token comment"># 私鑰</span>
+~/.ssh/id_ed25519.pub       <span class="token comment"># 公鑰</span>
+</code></pre>
+<hr>
+<h2 id="🚀-指令二：ssh-copy-id-root192.168.99.3"><span class="prefix"></span><span class="content">🚀 指令二：<code>ssh-copy-id root@192.168.99.3</code></span><span class="suffix"></span></h2>
+<p>這行是 <strong>將剛剛產生的公鑰複製到遠端主機</strong>（在這裡是 <code>192.168.99.3</code>）的 <code>root</code> 帳號上。流程如下：</p>
+<ul>
+<li>
+<p>它會將本機的 <code>~/.ssh/id_ed25519.pub</code> 公鑰內容，追加到目標主機的：</p>
+<pre class=" language-bash"><code class="prism  language-bash">/root/.ssh/authorized_keys
+</code></pre>
+</li>
+<li>
+<p>未來連線時，只要你使用本機的私鑰，就可以自動通過身份驗證，不需要每次輸入密碼。</p>
+</li>
+</ul>
+<p>🧩 執行這行時會要求輸入一次遠端 <code>root</code> 的密碼，之後就可以免密碼登入了！</p>
+<hr>
+<h2 id="直接在openwrt192.168.99.3上操作"><span class="prefix"></span><span class="content">直接在openwrt192.168.99.3上操作</span><span class="suffix"></span></h2>
+<blockquote>
+<p>先把公鑰~/.ssh/id_ed25519.pub 搞到openwrt:/tmp/client.pub</p>
+</blockquote>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">mkdir</span> -p ~/.ssh
+<span class="token function">cat</span> /tmp/client.pub <span class="token operator">&gt;&gt;</span> ~/.ssh/authorized_keys
+<span class="token function">chmod</span> 700 ~/.ssh
+<span class="token function">chmod</span> 600 ~/.ssh/authorized_keys
+
+</code></pre>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
