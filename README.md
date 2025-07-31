@@ -17,6 +17,9 @@
 > [uci 指令 修改 OpenWrt 靜態 IP](https://deltawen2.github.io/just_Learning_notes/openwrt_uci%E6%8C%87%E4%BB%A4%E8%A7%A3%E6%9E%90.html)
 >
 > [adduser_openwrt](https://deltawen2.github.io/just_Learning_notes/adduser_openwrt.html)
+>
+> [ssh-keygen](https://deltawen2.github.io/just_Learning_notes/ssh-keygen.html)
+
 
 
 
