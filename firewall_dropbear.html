@@ -1,0 +1,154 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>firewall_dropbear</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#openwrt-使用-dropbear--區分內部外部網路判定是否允許密碼登入">OpenWRT 使用 Dropbear  區分內部外部網路判定是否允許密碼登入</a>
+<ul>
+<li><a href="#🧩-解法思路：使用防火牆--dropbear-組合控制登入方式">🧩 解法思路：使用防火牆 + Dropbear 組合控制登入方式</a></li>
+<li><a href="#✅-目前設定效果">✅ 目前設定效果</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <h1 id="openwrt-使用-dropbear--區分內部外部網路判定是否允許密碼登入">OpenWRT 使用 Dropbear  區分內部外部網路判定是否允許密碼登入</h1>
+<h2 id="🧩-解法思路：使用防火牆--dropbear-組合控制登入方式">🧩 解法思路：使用防火牆 + Dropbear 組合控制登入方式</h2>
+<h3 id="方法一：限制外部-ip-只能連接特定-dropbear-埠（只允許金鑰登入）">方法一：<strong>限制外部 IP 只能連接特定 Dropbear 埠（只允許金鑰登入）</strong></h3>
+<ol>
+<li>
+<p><strong>啟用兩個 Dropbear 實例</strong>：</p>
+<ul>
+<li>一個埠（例如 <code>22</code>）允許密碼登入，僅開放給內部網路。</li>
+<li>一個埠（例如 <code>2222</code>）只允許金鑰登入，開放給外部網路。</li>
+</ul>
+</li>
+<li>
+<p><strong>設定 Dropbear 實例</strong>：</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 允許密碼登入（內部用）(可能會跟預設的有重複)</span>
+uci add dropbear dropbear
+uci <span class="token keyword">set</span> dropbear.@dropbear<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.Port<span class="token operator">=</span><span class="token string">'22'</span>
+uci <span class="token keyword">set</span> dropbear.@dropbear<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.PasswordAuth<span class="token operator">=</span><span class="token string">'on'</span>
+uci <span class="token keyword">set</span> dropbear.@dropbear<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.RootPasswordAuth<span class="token operator">=</span><span class="token string">'on'</span>
+uci <span class="token keyword">set</span> dropbear.@dropbear<span class="token punctuation">[</span>0<span class="token punctuation">]</span>.Interface<span class="token operator">=</span><span class="token string">'lan'</span>
+
+<span class="token comment"># 禁止密碼登入（外部用）</span>
+uci add dropbear dropbear
+uci <span class="token keyword">set</span> dropbear.@dropbear<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.Port<span class="token operator">=</span><span class="token string">'2222'</span>
+uci <span class="token keyword">set</span> dropbear.@dropbear<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.PasswordAuth<span class="token operator">=</span><span class="token string">'on'</span>
+uci <span class="token keyword">set</span> dropbear.@dropbear<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.RootPasswordAuth<span class="token operator">=</span><span class="token string">'off'</span>
+uci <span class="token keyword">set</span> dropbear.@dropbear<span class="token punctuation">[</span>1<span class="token punctuation">]</span>.Interface<span class="token operator">=</span><span class="token string">'wan'</span>
+
+uci commit dropbear
+/etc/init.d/dropbear restart
+
+</code></pre>
+</li>
+</ol>
+<p>🔐 Dropbear 支援的設定選項</p>
+<pre><code>Dropbear 的 UCI 設定中有兩個相關選項：
+
+   `PasswordAuth`：是否允許密碼登入（針對所有使用者）
+   `RootPasswordAuth`：是否允許 root 使用密碼登入
+</code></pre>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#正確長這樣 有重複的要刪掉</span>
+root@OpenWrt:~<span class="token comment"># cat /etc/config/dropbear</span>
+
+config dropbear <span class="token string">'main'</span>
+        option <span class="token function">enable</span> <span class="token string">'1'</span>
+        option PasswordAuth <span class="token string">'on'</span>
+        option RootPasswordAuth <span class="token string">'on'</span>
+        option Port <span class="token string">'22'</span>
+        option Interface <span class="token string">'lan'</span>
+
+config dropbear
+        option Port <span class="token string">'2222'</span>
+        option PasswordAuth <span class="token string">'on'</span>
+        option RootPasswordAuth <span class="token string">'off'</span>
+        option Interface <span class="token string">'wan'</span>
+
+root@OpenWrt:~<span class="token comment">#</span>
+</code></pre>
+<ol start="3">
+<li>
+<p><strong>設定防火牆規則</strong>：</p>
+<ul>
+<li>開放 <code>22</code> 埠給內部網段（例如 <code>192.168.1.0/24</code>）。</li>
+<li>開放 <code>2222</code> 埠給外部網路。</li>
+</ul>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 內部網路允許連接 22 埠</span>
+uci add firewall rule
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.name<span class="token operator">=</span><span class="token string">'Allow-SSH-Internal'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.src<span class="token operator">=</span><span class="token string">'lan'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.dest_port<span class="token operator">=</span><span class="token string">'22'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.proto<span class="token operator">=</span><span class="token string">'tcp'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.target<span class="token operator">=</span><span class="token string">'ACCEPT'</span>
+
+<span class="token comment"># 外部網路允許連接 2222 埠</span>
+uci add firewall rule
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.name<span class="token operator">=</span><span class="token string">'Allow-SSH-External'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.src<span class="token operator">=</span><span class="token string">'wan'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.dest_port<span class="token operator">=</span><span class="token string">'2222'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.proto<span class="token operator">=</span><span class="token string">'tcp'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.target<span class="token operator">=</span><span class="token string">'ACCEPT'</span>
+
+uci commit firewall
+/etc/init.d/firewall restart
+
+</code></pre>
+</li>
+</ol>
+<h2 id="✅-目前設定效果">✅ 目前設定效果</h2>
+
+<table>
+<thead>
+<tr>
+<th>網路來源</th>
+<th>SSH 埠</th>
+<th>使用者</th>
+<th>密碼登入</th>
+<th>金鑰登入</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>內部網路</td>
+<td>22</td>
+<td>root / 一般使用者</td>
+<td>✅ 允許</td>
+<td>✅ 允許</td>
+</tr>
+<tr>
+<td>外部網路</td>
+<td>2222</td>
+<td>一般使用者</td>
+<td>✅ 允許</td>
+<td>✅ 允許</td>
+</tr>
+<tr>
+<td>外部網路</td>
+<td>2222</td>
+<td>root</td>
+<td>❌ 禁止</td>
+<td>✅ 允許</td>
+</tr>
+</tbody>
+</table>
+    </div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,133 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>openwrt_OpenSSH</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#openwrt_openssh">Openwrt_OpenSSH</a>
+<ul>
+<li><a href="#✅-1.-安裝-openssh-並停用-dropbear">✅ 1. 安裝 OpenSSH 並停用 Dropbear</a></li>
+<li><a href="#✅-2.-設定-ssh-登入規則">✅ 2. 設定 SSH 登入規則</a></li>
+<li><a href="#✅-3.-設定防火牆規則（區分-22-與-2222-埠）">✅ 3. 設定防火牆規則（區分 22 與 2222 埠）</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <h1 id="openwrt_openssh">Openwrt_OpenSSH</h1>
+<p>🔐權限要求</p>
+
+<table>
+<thead>
+<tr>
+<th>網路來源</th>
+<th>SSH 埠</th>
+<th>使用者類型</th>
+<th>密碼登入</th>
+<th>金鑰登入</th>
+<th>是否允許登入</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>內部網路</strong> (<code>192.168.99.0/24</code>)</td>
+<td>22</td>
+<td>一般使用者</td>
+<td>✅ 允許</td>
+<td>✅ 允許</td>
+<td>✅ 允許</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>root</td>
+<td>✅ 允許</td>
+<td>✅ 允許</td>
+<td>✅ 允許</td>
+</tr>
+<tr>
+<td><strong>外部網路</strong>（非 <code>192.168.99.0/24</code>）</td>
+<td>2222</td>
+<td>一般使用者</td>
+<td>✅ 允許</td>
+<td>✅ 允許</td>
+<td>✅ 允許</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>root</td>
+<td>❌ 禁止</td>
+<td>❌ 禁止</td>
+<td>❌ 禁止</td>
+</tr>
+</tbody>
+</table><hr>
+<h2 id="✅-1.-安裝-openssh-並停用-dropbear">✅ 1. 安裝 OpenSSH 並停用 Dropbear</h2>
+<pre class=" language-bash"><code class="prism  language-bash">opkg update
+opkg <span class="token function">install</span> openssh-server
+/etc/init.d/dropbear disable
+/etc/init.d/dropbear stop
+/etc/init.d/sshd <span class="token function">enable</span>
+/etc/init.d/sshd start
+</code></pre>
+<h2 id="✅-2.-設定-ssh-登入規則">✅ 2. 設定 SSH 登入規則</h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">vi</span> /etc/ssh/sshd_config
+</code></pre>
+<p>加入或修改以下內容：</p>
+<pre class=" language-bash"><code class="prism  language-bash">Port 22	 		<span class="token comment"># OpenSSH 監聽內部網路的預設 SSH 埠（LAN 使用）</span>
+Port 2222		 <span class="token comment"># OpenSSH 監聽外部網路的 SSH 埠（WAN 使用）</span>
+<span class="token comment"># 禁止 root 從外部登入</span>
+Match Address 192.168.99.0/24 	<span class="token comment"># 套用以下設定給來自 192.168.99.x 的 IP（內部網路）</span>
+PermitRootLogin <span class="token function">yes</span>				 <span class="token comment"># 允許 root 使用者登入（僅限內部網路）</span>
+PasswordAuthentication <span class="token function">yes</span> 			<span class="token comment"># 允許使用密碼登入（僅限內部網路）</span>
+PubkeyAuthentication <span class="token function">yes</span> 			<span class="token comment"># 允許使用 SSH 金鑰登入（僅限內部網路）</span>
+
+
+Match Address <span class="token operator">!</span>192.168.99.0/24		 <span class="token comment"># 套用以下設定給非 192.168.99.x 的 IP（外部網路）</span>
+PermitRootLogin no 					<span class="token comment"># 禁止 root 使用者登入（外部網路）</span>
+PasswordAuthentication <span class="token function">yes</span> 			<span class="token comment"># 允許一般使用者使用密碼登入（外部網路）</span>
+PubkeyAuthentication <span class="token function">yes</span> 			<span class="token comment"># 允許一般使用者使用 SSH 金鑰登入（外部網路）</span>
+</code></pre>
+<p>重啟 OpenSSH</p>
+<pre class=" language-bash"><code class="prism  language-bash">/etc/init.d/sshd restart
+</code></pre>
+<h2 id="✅-3.-設定防火牆規則（區分-22-與-2222-埠）">✅ 3. 設定防火牆規則（區分 22 與 2222 埠）</h2>
+<p>編輯 <code>/etc/config/firewall</code>：</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 允許內部網路使用 port 22</span>
+config rule
+option name <span class="token string">'Allow-SSH-Internal'</span>
+option src <span class="token string">'lan'</span>
+option dest_port <span class="token string">'22'</span>
+option proto <span class="token string">'tcp'</span>
+option target <span class="token string">'ACCEPT'</span>
+
+<span class="token comment"># 允許外部網路使用 port 2222</span>
+config rule
+option name <span class="token string">'Allow-SSH-External'</span>
+option src <span class="token string">'wan'</span>
+option dest_port <span class="token string">'2222'</span>
+option proto <span class="token string">'tcp'</span>
+option target <span class="token string">'ACCEPT'</span>
+</code></pre>
+<p>然後重新啟動防火牆：</p>
+<pre class=" language-bash"><code class="prism  language-bash">/etc/init.d/firewall restart
+</code></pre>
+
+    </div>
+  </div>
+</body>
+
+</html>
