@@ -49,14 +49,14 @@ deltawen@esprotaubuntu:~$ <span class="token function">vi</span> mount_nas.sh
 <pre class=" language-bash"><code class="prism  language-bash">
 <span class="token comment">#!/bin/bash</span>
 <span class="token comment">#建立資料夾</span>
-<span class="token function">mkdir</span> -p /mnt:/nas_share
+<span class="token function">mkdir</span> -p /mnt/nas_share
 <span class="token comment">#顯示使用者輸入資料</span>
 <span class="token function">read</span> -p <span class="token string">"請輸入使用者名稱: "</span> username
 <span class="token function">read</span> -s -p <span class="token string">"請輸入密碼: "</span> password
 <span class="token comment">#輸入還密碼後換行</span>
 <span class="token keyword">echo</span> <span class="token string">""</span>
 <span class="token comment">#掛載指令</span>
-<span class="token function">sudo</span> <span class="token function">mount</span> -t cifs //172.27.2.111/目錄名稱 /mnt/nas_share -o username<span class="token operator">=</span><span class="token variable">$username</span>,password<span class="token operator">=</span><span class="token variable">$password</span>,workgroup<span class="token operator">=</span>WORKGROUP,iocharset<span class="token operator">=</span>utf8,file_mode<span class="token operator">=</span>0777,dir_mode<span class="token operator">=</span>0777
+<span class="token function">sudo</span> <span class="token function">mount</span> -t cifs //172.27.2.111/資料夾名稱 /mnt/nas_share -o username<span class="token operator">=</span><span class="token variable">$username</span>,password<span class="token operator">=</span><span class="token variable">$password</span>,workgroup<span class="token operator">=</span>WORKGROUP,iocharset<span class="token operator">=</span>utf8,file_mode<span class="token operator">=</span>0777,dir_mode<span class="token operator">=</span>0777
 <span class="token comment">#顯示磁碟掛載情形</span>
 <span class="token function">df</span> -h
 </code></pre>
