@@ -1,4 +1,4 @@
-# 只是學習雜記<就是雜魚>
+# 一隻雜魚的武林
 ## Openwrt Ubuntu 通用
 > [mount_nas](https://deltawen2.github.io/just_Learning_notes/mount_nas.sh.md.html)
 > 
