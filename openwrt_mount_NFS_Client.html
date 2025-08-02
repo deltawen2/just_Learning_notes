@@ -1,0 +1,191 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>openwrt_mount_NFS_Client</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#openwrt-nfs-client-開機掛載詳細步驟">OpenWrt NFS client 開機掛載詳細步驟</a>
+<ul>
+<li><a href="#步驟-1：安裝必要的套件">步驟 1：安裝必要的套件</a></li>
+<li><a href="#步驟-2：啟用-rpc-服務">步驟 2：啟用 RPC 服務</a></li>
+<li><a href="#步驟-3：手動測試掛載">步驟 3：手動測試掛載</a></li>
+<li><a href="#步驟-4：設定開機自動掛載（使用自定義腳本）">步驟 4：設定開機自動掛載（使用自定義腳本）</a></li>
+<li><a href="#指令解析">指令解析</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="openwrt-nfs-client-開機掛載詳細步驟"><span class="prefix"></span><span class="content">OpenWrt NFS client 開機掛載詳細步驟</span><span class="suffix"></span></h1>
+<h2 id="步驟-1：安裝必要的套件"><span class="prefix"></span><span class="content">步驟 1：安裝必要的套件</span><span class="suffix"></span></h2>
+<p>請改用以下指令來安裝正確的 NFS 客戶端套件及其相關依賴：</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 更新套件列表</span>
+opkg update
+
+<span class="token comment"># 安裝 NFS 客戶端套件 (包含mount.nfs指令)</span>
+opkg <span class="token function">install</span> nfs-utils
+
+<span class="token comment"># 安裝核心模組以支援NFSv3和NFSv4</span>
+opkg <span class="token function">install</span> kmod-fs-nfs kmod-fs-nfs-v4
+
+<span class="token comment"># 安裝 RPC 套件，這是NFS的基礎服務</span>
+opkg <span class="token function">install</span> libtirpc rpcbind
+</code></pre>
+<ul>
+<li>
+<p><strong><code>nfs-utils</code></strong>：這是包含 <code>mount.nfs</code> 等工具的正確套件名稱。</p>
+</li>
+<li>
+<p><strong><code>kmod-fs-nfs</code></strong> 和 <strong><code>kmod-fs-nfs-v4</code></strong>：核心模組，提供對 NFSv3 和 NFSv4 檔案系統的支援。</p>
+</li>
+<li>
+<p><strong><code>libtirpc</code></strong> 和 <strong><code>rpcbind</code></strong>：遠端程序呼叫（RPC）服務，是 NFS 運作的基礎。</p>
+</li>
+</ul>
+<hr>
+<h2 id="步驟-2：啟用-rpc-服務"><span class="prefix"></span><span class="content">步驟 2：啟用 RPC 服務</span><span class="suffix"></span></h2>
+<p>NFS 需要 <code>rpcbind</code> 服務才能正常運作。請在安裝後啟用並啟動它。</p>
+<pre class=" language-bash"><code class="prism  language-bash">/etc/init.d/rpcbind <span class="token function">enable</span>
+/etc/init.d/rpcbind start
+</code></pre>
+<hr>
+<h2 id="步驟-3：手動測試掛載"><span class="prefix"></span><span class="content">步驟 3：手動測試掛載</span><span class="suffix"></span></h2>
+<p>在進行自動掛載設定之前，建議先手動測試以確保所有套件和設定都正確。</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 建立掛載點目錄</span>
+<span class="token function">mkdir</span> -p /mnt/nfsimage
+
+<span class="token comment"># 執行手動掛載，使用nfsvers=4指定協議版本</span>
+<span class="token function">mount</span> -t nfs -o nfsvers<span class="token operator">=</span>4 192.168.99.7:/mnt/image /mnt/nfsimage
+
+<span class="token comment"># 檢查是否成功掛載</span>
+<span class="token function">df</span> -h
+</code></pre>
+<p>如果 <code>df -h</code> 輸出中顯示了 <code>192.168.99.7:/mnt/image</code>，代表手動掛載成功。</p>
+<hr>
+<h2 id="步驟-4：設定開機自動掛載（使用自定義腳本）"><span class="prefix"></span><span class="content">步驟 4：設定開機自動掛載（使用自定義腳本）</span><span class="suffix"></span></h2>
+<p>由於 OpenWrt 的開機順序問題，直接修改 <code>/etc/config/fstab</code> 可能會失敗。最可靠的方法是建立一個自定義的開機腳本，確保在網路服務完全就緒後才執行掛載。</p>
+<ol>
+<li><strong>建立啟動腳本</strong>：</li>
+</ol>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">vi</span> /etc/init.d/nfs-mount
+</code></pre>
+<ol start="3">
+<li><strong>腳本內容</strong>：將以下內容複製到檔案中。</li>
+</ol>
+<pre class=" language-bash"><code class="prism  language-bash">    <span class="token comment">#!/bin/sh /etc/rc.common</span>
+    
+    START<span class="token operator">=</span>99
+    STOP<span class="token operator">=</span>10
+    
+    start<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment"># 在掛載前延遲10秒，確保網路服務和rpcbind已啟動</span>
+        <span class="token function">sleep</span> 10
+    
+        <span class="token comment"># 執行NFS掛載指令</span>
+        <span class="token function">mount</span> -t nfs -o rw,sync,nfsvers<span class="token operator">=</span>4 192.168.99.7:/mnt/image /mnt/nfsimage
+    <span class="token punctuation">}</span>
+    
+    stop<span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token comment"># 卸載NFS分區</span>
+        <span class="token function">umount</span> /mnt/nfsimage
+    <span class="token punctuation">}</span>
+</code></pre>
+<p><strong><code>START=99</code></strong>：確保此腳本在其他所有啟動服務之後執行，避免時序問題。<br>
+<strong><code>sleep 10</code></strong>：提供額外的緩衝時間，確保網路連線穩定。</p>
+<ol start="4">
+<li><strong>設為可執行並啟用</strong>：</li>
+</ol>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">chmod</span> +x /etc/init.d/nfs-mount
+/etc/init.d/nfs-mount <span class="token function">enable</span>   <span class="token comment">#開機自動啟動</span>
+</code></pre>
+<ol start="6">
+<li><strong>重新啟動</strong>：</li>
+</ol>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">reboot</span>
+</code></pre>
+<pre><code>重新啟動後，NFS 分區將會自動掛載。您可以使用 `df -h` 指令來確認。
+</code></pre>
+<h2 id="指令解析"><span class="prefix"></span><span class="content">指令解析</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">mount</span> -t nfs -o nfsvers<span class="token operator">=</span>4 192.168.99.7:/mnt/image /mnt/nfsimage
+</code></pre>
+<ul>
+<li>
+<p><strong><code>mount</code></strong>：這是主要的指令，用來將檔案系統掛載到指定的掛載點。</p>
+</li>
+<li>
+<p><strong><code>-t nfs</code></strong>：指定要掛載的檔案系統類型（file system type）。在這裡，我們明確告訴 <code>mount</code> 指令，我們正在處理的是 <strong>NFS（網路檔案系統）</strong>。</p>
+</li>
+<li>
+<p><strong><code>-o nfsvers=4</code></strong>：這是用來指定掛載選項（options）的參數。</p>
+<ul>
+<li>
+<p><strong><code>-o</code></strong> 代表 <code>options</code>。</p>
+</li>
+<li>
+<p><strong><code>nfsvers=4</code></strong> 指定了要使用的 <strong>NFS 協定版本</strong>。NFS 協定有多個版本，其中 NFSv4 是較新的版本，通常在效能和安全性上有所改進。明確指定版本有助於避免客戶端和伺服器之間因為版本不一致而導致的通訊失敗。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong><code>192.168.99.7:/mnt/image</code></strong>：這是要掛載的遠端來源。</p>
+<ul>
+<li>
+<p><strong><code>192.168.99.7</code></strong> 是 <strong>NFS 伺服器的 IP 位址</strong>。</p>
+</li>
+<li>
+<p><strong><code>:</code></strong> 用來分隔伺服器 IP 和遠端分享的目錄路徑。</p>
+</li>
+<li>
+<p><strong><code>/mnt/image</code></strong> 是 NFS 伺服器上被分享出來的目錄路徑。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong><code>/mnt/nfsimage</code></strong>：這是本地端的掛載點（mount point）。</p>
+<ul>
+<li>
+<p>這是您在本機 OpenWrt 系統上預先建立好的目錄。</p>
+</li>
+<li>
+<p>掛載完成後，您就可以透過存取這個 <code>/mnt/nfsimage</code> 目錄，來讀取或寫入 NFS 伺服器上 <code>/mnt/image</code> 目錄裡的檔案。</p>
+</li>
+</ul>
+</li>
+</ul>
+<p><strong>總結來說，這段指令的意思是：</strong></p>
+<ul>
+<li>「請使用 <code>nfsvers=4</code> 這個協定版本，將 <code>192.168.99.7</code> 這台伺服器上分享的 <code>/mnt/image</code> 目錄，掛載到我本地的 <code>/mnt/nfsimage</code> 這個目錄下。」</li>
+</ul>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
