@@ -25,6 +25,8 @@
 > [firewall_dropbear.](https://deltawen2.github.io/just_Learning_notes/firewall_dropbear.html)
 >
 > [openwrt_mount_NFS_Client](https://deltawen2.github.io/just_Learning_notes/openwrt_mount_NFS_Client.html)
+>
+> [個人雲端架設](https://deltawen2.github.io/just_Learning_notes/個人雲端架設.html)
 
 
 
