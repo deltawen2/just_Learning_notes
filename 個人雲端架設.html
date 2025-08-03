@@ -1,0 +1,126 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>uhttpad_openwrt架站</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#openwrt--uhttpd-openssh架設的網站＆個人雲端">OpenWrt + uHTTPd +openSSH架設的網站＆個人雲端</a>
+<ul>
+<li><a href="#設定固定ip">設定固定IP</a></li>
+<li><a href="#🛠-安裝-uhttpd">🛠 安裝 uHTTPd</a></li>
+<li><a href="#🔧-設定-uhttpd-網站根目錄與-port">🔧 設定 uHTTPd 網站根目錄與 port</a></li>
+<li><a href="#增加防火牆規則">增加防火牆規則</a></li>
+<li><a href="#設定首頁">設定首頁</a></li>
+<li><a href="#🌐-測試外部訪問">🌐 測試外部訪問</a></li>
+</ul>
+</li>
+<li><a href="#🌐追加提供上傳下載（個人雲端）">🌐追加提供上傳下載（個人雲端）</a>
+<ul>
+<li><a href="#🔧設定openssh">🔧設定openSSH</a></li>
+</ul>
+</li>
+<li><a href="#增加互動式上傳界面">增加互動式上傳界面</a>
+<ul>
+<li><a href="#建制後端驗證處理程序">建制後端驗證處理程序</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="openwrt--uhttpd-openssh架設的網站＆個人雲端"><span class="prefix"></span><span class="content">OpenWrt + uHTTPd +openSSH架設的網站＆個人雲端</span><span class="suffix"></span></h1>
+<p>邊界條件</p>
+<blockquote>
+<p>OpenWrt略知一二<br>
+一台12年前的x86電腦<br>
+固定IP</p>
+</blockquote>
+<h2 id="設定固定ip"><span class="prefix"></span><span class="content">設定固定IP</span><span class="suffix"></span></h2>
+<p>從ISP業者(網際網路服務供應商)取得固定IP<br>
+這裡以中華電信pppoe為例<br>
+寫進/etc/config/network</p>
+<pre class=" language-bash"><code class="prism  language-bash">config interface <span class="token string">'wan'</span>
+	option device <span class="token string">'eth1'</span>
+	option proto <span class="token string">'pppoe'</span>
+	option username <span class="token string">'********@ip.hinet.net'</span>
+	option password <span class="token string">'******************'</span>
+	option ipv6 <span class="token string">'auto'</span>
+</code></pre>
+<h2 id="🛠-安裝-uhttpd"><span class="prefix"></span><span class="content">🛠 安裝 uHTTPd</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">opkg update
+opkg <span class="token function">install</span> uhttpd uhttpd-mod-ubus
+</code></pre>
+<h2 id="🔧-設定-uhttpd-網站根目錄與-port"><span class="prefix"></span><span class="content">🔧 設定 uHTTPd 網站根目錄與 port</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">uci <span class="token keyword">set</span> uhttpd.main.listen_http<span class="token operator">=</span><span class="token string">'0.0.0.0:80'</span>
+uci <span class="token keyword">set</span> uhttpd.main.listen_https<span class="token operator">=</span><span class="token string">'0.0.0.0:443'</span>
+uci <span class="token keyword">set</span> uhttpd.main.home<span class="token operator">=</span><span class="token string">'/www'</span>
+uci commit uhttpd
+/etc/init.d/uhttpd restart
+</code></pre>
+<h2 id="增加防火牆規則"><span class="prefix"></span><span class="content">增加防火牆規則</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 開放 port 80 (HTTP)</span>
+uci add firewall rule
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.name<span class="token operator">=</span><span class="token string">'Allow-HTTP'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.src<span class="token operator">=</span><span class="token string">'wan'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.proto<span class="token operator">=</span><span class="token string">'tcp'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.dest_port<span class="token operator">=</span><span class="token string">'80'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.target<span class="token operator">=</span><span class="token string">'ACCEPT'</span>
+
+<span class="token comment"># 開放 port 443 (HTTPS) 可選</span>
+uci add firewall rule
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.name<span class="token operator">=</span><span class="token string">'Allow-HTTPS'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.src<span class="token operator">=</span><span class="token string">'wan'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.proto<span class="token operator">=</span><span class="token string">'tcp'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.dest_port<span class="token operator">=</span><span class="token string">'443'</span>
+uci <span class="token keyword">set</span> firewall.@rule<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.target<span class="token operator">=</span><span class="token string">'ACCEPT'</span>
+
+uci commit firewall
+/etc/init.d/firewall restart
+</code></pre>
+<h2 id="設定首頁"><span class="prefix"></span><span class="content">設定首頁</span><span class="suffix"></span></h2>
+<p>建立首頁index.html放在/www/下<br>
+確保 <code>/www/index.html</code> 存在或放置你要提供的網頁內容。</p>
+<h2 id="🌐-測試外部訪問"><span class="prefix"></span><span class="content">🌐 測試外部訪問</span><span class="suffix"></span></h2>
+<p>http:// ISP業者提供的IP/</p>
+<h1 id="🌐追加提供上傳下載（個人雲端）"><span class="prefix"></span><span class="content">🌐追加提供上傳下載（個人雲端）</span><span class="suffix"></span></h1>
+<h2 id="🔧設定openssh"><span class="prefix"></span><span class="content">🔧設定openSSH</span><span class="suffix"></span></h2>
+<blockquote>
+<p><a href="https://deltawen2.github.io/just_Learning_notes/openwrt_OpenSSH.html">https://deltawen2.github.io/just_Learning_notes/openwrt_OpenSSH.html</a></p>
+</blockquote>
+<h1 id="增加互動式上傳界面"><span class="prefix"></span><span class="content">增加互動式上傳界面</span><span class="suffix"></span></h1>
+<h2 id="建制後端驗證處理程序"><span class="prefix"></span><span class="content">建制後端驗證處理程序</span><span class="suffix"></span></h2>
+<blockquote>
+<p>都是AI寫的還沒整理</p>
+</blockquote>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
