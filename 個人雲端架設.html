@@ -56,9 +56,9 @@
         <h1 id="openwrt--uhttpd-openssh架設網站＆個人雲端"><span class="prefix"></span><span class="content">OpenWrt + uHTTPd +openSSH架設網站＆個人雲端</span><span class="suffix"></span></h1>
 <p>邊界條件</p>
 <blockquote>
-<p>OpenWrt略知一二<br>
+<p>固定IP<br>
 一台12年前的x86電腦<br>
-固定IP</p>
+<a href="https://deltawen2.github.io/just_Learning_notes/openwrt_live_usb.html">OpenWrt略知一二</a></p>
 </blockquote>
 <h2 id="設定固定ip"><span class="prefix"></span><span class="content">設定固定IP</span><span class="suffix"></span></h2>
 <p>從ISP業者(網際網路服務供應商)取得固定IP<br>
@@ -81,6 +81,17 @@ uci <span class="token keyword">set</span> uhttpd.main.listen_https<span class="
 uci <span class="token keyword">set</span> uhttpd.main.home<span class="token operator">=</span><span class="token string">'/www'</span>
 uci commit uhttpd
 /etc/init.d/uhttpd restart
+</code></pre>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#透過增加 script_timeout 成600秒 和 network_timeout 成300秒避免上傳時間過久而自動中止</span>
+<span class="token function">vi</span> /etc/config/uhttpd
+</code></pre>
+<pre class=" language-bash"><code class="prism  language-bash">option cgi_prefix <span class="token string">'/cgi-bin'</span>
+list lua_prefix <span class="token string">'/cgi-bin/luci=/usr/lib/lua/luci/sgi/uhttpd.lua'</span>
+option script_timeout <span class="token string">'600'</span>
+option network_timeout <span class="token string">'300'</span>
+option http_keepalive <span class="token string">'20'</span>
+option tcp_keepalive <span class="token string">'1'</span>
+option ubus_prefix <span class="token string">'/ubus'</span>
 </code></pre>
 <h2 id="增加防火牆規則"><span class="prefix"></span><span class="content">增加防火牆規則</span><span class="suffix"></span></h2>
 <pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 開放 port 80 (HTTP)</span>
@@ -206,6 +217,7 @@ uci commit firewall
 <span class="token keyword">import</span> sys
 <span class="token keyword">import</span> os
 <span class="token keyword">import</span> crypt <span class="token comment"># 用於驗證系統使用者密碼</span>
+<span class="token keyword">import</span> datetime <span class="token comment"># 導入 datetime 模組來處理時間</span>
 
 <span class="token comment"># 啟用詳細的錯誤報告，方便除錯。</span>
 <span class="token comment"># 在生產環境中，建議禁用此功能，以避免洩露敏感資訊。</span>
@@ -300,6 +312,9 @@ UPLOAD_DIR <span class="token operator">=</span> <span class="token string">"/ww
                 <span class="token comment"># file_name = f"{os.path.splitext(file_name)[0]}_{int(time.time())}{os.path.splitext(file_name)[1]}"</span>
                 <span class="token comment"># file_path = os.path.join(UPLOAD_DIR, file_name)</span>
 
+            <span class="token comment"># 記錄上傳開始時間</span>
+            start_time <span class="token operator">=</span> datetime<span class="token punctuation">.</span>datetime<span class="token punctuation">.</span>now<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
             <span class="token comment"># 將檔案內容寫入到指定路徑</span>
             <span class="token keyword">with</span> <span class="token builtin">open</span><span class="token punctuation">(</span>file_path<span class="token punctuation">,</span> <span class="token string">'wb'</span><span class="token punctuation">)</span> <span class="token keyword">as</span> output_file<span class="token punctuation">:</span>
                 <span class="token comment"># 逐塊讀取上傳的檔案內容並寫入，以處理大檔案</span>
@@ -308,9 +323,31 @@ UPLOAD_DIR <span class="token operator">=</span> <span class="token string">"/ww
                     <span class="token keyword">if</span> <span class="token operator">not</span> chunk<span class="token punctuation">:</span>
                         <span class="token keyword">break</span>
                     output_file<span class="token punctuation">.</span>write<span class="token punctuation">(</span>chunk<span class="token punctuation">)</span>
+            
+            <span class="token comment"># 記錄上傳結束時間</span>
+            end_time <span class="token operator">=</span> datetime<span class="token punctuation">.</span>datetime<span class="token punctuation">.</span>now<span class="token punctuation">(</span><span class="token punctuation">)</span>
+            <span class="token comment"># 計算上傳時間</span>
+            upload_duration <span class="token operator">=</span> end_time <span class="token operator">-</span> start_time
+            <span class="token comment"># 取得檔案大小</span>
+            file_size_bytes <span class="token operator">=</span> os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>getsize<span class="token punctuation">(</span>file_path<span class="token punctuation">)</span>
+
+            <span class="token comment"># 將檔案大小轉換為更易讀的格式 (KB, MB, GB)</span>
+            <span class="token keyword">def</span> <span class="token function">format_bytes</span><span class="token punctuation">(</span>size<span class="token punctuation">)</span><span class="token punctuation">:</span>
+                <span class="token comment"># 格式化檔案大小的輔助函數</span>
+                power <span class="token operator">=</span> <span class="token number">2</span><span class="token operator">**</span><span class="token number">10</span>
+                n <span class="token operator">=</span> <span class="token number">0</span>
+                byte_labels <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token number">0</span> <span class="token punctuation">:</span> <span class="token string">'Bytes'</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">:</span> <span class="token string">'KB'</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">:</span> <span class="token string">'MB'</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">:</span> <span class="token string">'GB'</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">:</span> <span class="token string">'TB'</span><span class="token punctuation">}</span>
+                <span class="token keyword">while</span> size <span class="token operator">&gt;</span> power<span class="token punctuation">:</span>
+                    size <span class="token operator">/=</span> power
+                    n <span class="token operator">+=</span> <span class="token number">1</span>
+                <span class="token keyword">return</span> f<span class="token string">"{size:.2f} {byte_labels[n]}"</span>
+
+            formatted_file_size <span class="token operator">=</span> format_bytes<span class="token punctuation">(</span>file_size_bytes<span class="token punctuation">)</span>
 
             <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"&lt;h3&gt;✅ 上傳成功！&lt;/h3&gt;"</span><span class="token punctuation">)</span>
-            <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"&lt;p&gt;檔案 **{file_name}** 已成功上傳到 {UPLOAD_DIR}！&lt;/p&gt;"</span><span class="token punctuation">)</span>
+            <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"&lt;p&gt;檔案 **{file_name}** 已成功上傳到！&lt;/p&gt;"</span><span class="token punctuation">)</span>
+            <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"&lt;p&gt;檔案大小：{formatted_file_size}&lt;/p&gt;"</span><span class="token punctuation">)</span>
+            <span class="token keyword">print</span><span class="token punctuation">(</span>f<span class="token string">"&lt;p&gt;上傳時間：{upload_duration.total_seconds():.2f} 秒&lt;/p&gt;"</span><span class="token punctuation">)</span>
         <span class="token keyword">else</span><span class="token punctuation">:</span>
             <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"&lt;h3&gt;⚠️ 警告&lt;/h3&gt;"</span><span class="token punctuation">)</span>
             <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"&lt;p&gt;沒有選擇檔案或上傳失敗。&lt;/p&gt;"</span><span class="token punctuation">)</span>
@@ -330,6 +367,7 @@ UPLOAD_DIR <span class="token operator">=</span> <span class="token string">"/ww
 <span class="token comment"># 確保腳本被直接執行時才呼叫 main 函式</span>
 <span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">"__main__"</span><span class="token punctuation">:</span>
     main<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
 
 </code></pre>
 <pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#設定執行權限</span>
