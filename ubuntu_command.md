@@ -22,11 +22,11 @@ ls -R /var：遞迴列出 /var 目錄下所有內容
 
 # 查uuid
 ```bash
-deltawen@wensever:~$ blkid
-/dev/sda4: UUID="4f9b0933-2961-4569-8537-1448bc98c3b8" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="afd68cc8-a88c-45a4-8018-04dda0b375d4"
-/dev/sda2: UUID="3f5d1e0d-5e6f-4811-b46a-0f6401be3f4a" BLOCK_SIZE="4096" TYPE="ext4" PARTUUID="34bcce64-b591-4576-9853-7de6f1e274fe"
-/dev/sda3: UUID="865d221d-77a5-4261-bfe8-04227f66204f" TYPE="swap" PARTUUID="8ce41657-e6f0-4bee-aa84-e308bafdf73c"
-
+root@OpenWrt:~# block info
+/dev/sda1: UUID="1234-ABCD" LABEL="kernel" VERSION="FAT16" MOUNT="/boot" TYPE="vfat"
+/dev/sda2: UUID="ff313567-e9f1-5a5d-9895-3ba130b4a864" LABEL="rootfs" VERSION="1.0" MOUNT="/rom" TYPE="ext4"
+/dev/sda3: UUID="ebdb0d8a-3335-4032-b1f8-542d486dffd0" VERSION="1.0" MOUNT="/overlay" TYPE="ext4"
+/dev/sda4: UUID="e9adf276-1dbc-4a56-93fe-468599988425" VERSION="1.0" MOUNT="/www" TYPE="ext4"
 ```
 
 # 查磁碟
