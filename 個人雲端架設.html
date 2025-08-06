@@ -226,7 +226,7 @@ cgitb<span class="token punctuation">.</span>enable<span class="token punctuatio
 <span class="token comment"># 檔案上傳的目標目錄。</span>
 <span class="token comment"># !!! 警告：請務必將此路徑修改為非網頁公開的目錄，以確保安全。</span>
 <span class="token comment"># 例如：/root/uploads/ 或 /mnt/sda1/uploads/</span>
-UPLOAD_DIR <span class="token operator">=</span> <span class="token string">"/www/uploads/"</span> <span class="token comment"># 您目前設定的路徑。再次強烈建議修改為 /root/uploads/</span>
+UPLOAD_DIR <span class="token operator">=</span> <span class="token string">"/*****/*****/"</span> <span class="token comment"># 您目前設定的路徑。再次強烈建議修改為 /root/uploads/</span>
 
 <span class="token comment"># 確保上傳目錄存在</span>
 <span class="token keyword">if</span> <span class="token operator">not</span> os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>exists<span class="token punctuation">(</span>UPLOAD_DIR<span class="token punctuation">)</span><span class="token punctuation">:</span>
