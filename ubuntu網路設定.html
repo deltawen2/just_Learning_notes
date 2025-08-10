@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ubuntu網路設定</title>
+  <title>ubuntu網路設定.md</title>
   <link rel="stylesheet" href="https://stackedit.cn/style.css" />
   <style type="text/css">
     .app--dark {
@@ -35,6 +35,13 @@
 <li><a href="#驗證網路狀態">驗證網路狀態</a></li>
 <li><a href="#啟用-ssh-遠端連線（若尚未安裝）">啟用 SSH 遠端連線（若尚未安裝）</a></li>
 <li><a href="#🛠️-netplan-實用功能與指令一覽">🛠️ Netplan 實用功能與指令一覽</a></li>
+</ul>
+</li>
+<li><a href="#設定pppoe撥號">設定PPPOE撥號</a>
+<ul>
+<li><a href="#⚙️-1.-安裝-pppoe-工具">⚙️ 1. 安裝 PPPoE 工具</a></li>
+<li><a href="#修改netplan-設定檔">修改Netplan 設定檔</a></li>
+<li><a href="#🧭-2.-啟動互動式設定（一次性）">🧭 2. 啟動互動式設定（一次性）</a></li>
 </ul>
 </li>
 </ul>
@@ -164,6 +171,37 @@ ip route       <span class="token comment"># 檢查 default route</span>
 </table><blockquote>
 <p>📌 可搭配 <code>netplan apply</code>、<code>netplan try</code> 及 <code>ip a</code>、<code>ip route</code> 等指令進行驗證與除錯。</p>
 </blockquote>
+<h1 id="設定pppoe撥號"><span class="prefix"></span><span class="content">設定PPPOE撥號</span><span class="suffix"></span></h1>
+<h2 id="⚙️-1.-安裝-pppoe-工具"><span class="prefix"></span><span class="content">⚙️ 1. 安裝 PPPoE 工具</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#需要網路要先安裝或先下載</span>
+<span class="token function">sudo</span> apt update
+<span class="token function">sudo</span> apt <span class="token function">install</span> pppoeconf -y
+</code></pre>
+<h2 id="修改netplan-設定檔"><span class="prefix"></span><span class="content">修改Netplan 設定檔</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> <span class="token function">vi</span> /etc/netplan/50-cloud-init.yaml
+</code></pre>
+<pre class=" language-yaml"><code class="prism  language-yaml"><span class="token key atrule">network</span><span class="token punctuation">:</span>                      <span class="token comment"># 頂層設定，代表這是 Netplan 的網路設定</span>
+  <span class="token key atrule">version</span><span class="token punctuation">:</span> <span class="token number">2                  </span><span class="token comment"># Netplan 的語法版本，目前主流是 version 2</span>
+  <span class="token key atrule">ethernets</span><span class="token punctuation">:</span>                  <span class="token comment"># 定義所有 Ethernet（有線網路）介面</span>
+    <span class="token key atrule">eno1</span><span class="token punctuation">:</span>                     <span class="token comment"># 第一個網卡介面名稱（可能是主板上的 LAN）</span>
+      <span class="token key atrule">dhcp4</span><span class="token punctuation">:</span> <span class="token boolean important">false            </span><span class="token comment"># 關閉 IPv4 DHCP，改用手動設定 IP</span>
+      <span class="token key atrule">addresses</span><span class="token punctuation">:</span>              <span class="token comment"># 指定靜態 IP 位址</span>
+        <span class="token punctuation">-</span> 192.168.99.7/24     <span class="token comment"># 設定 eno1 的 IP 為 192.168.99.7，子網遮罩為 /24（255.255.255.0）</span>
+
+    <span class="token key atrule">enp2s0</span><span class="token punctuation">:</span>                   <span class="token comment"># 第二個網卡介面名稱（根據實際網卡名稱修改）（可能是 PPPoE 撥號用）</span>
+      <span class="token key atrule">optional</span><span class="token punctuation">:</span> <span class="token boolean important">true          </span><span class="token comment"># 標記此介面為「非必要」，開機時不強制等待此介面啟動</span>
+</code></pre>
+<h2 id="🧭-2.-啟動互動式設定（一次性）"><span class="prefix"></span><span class="content">🧭 2. 啟動互動式設定（一次性）</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> pppoeconf
+</code></pre>
+<p>這會掃描 <code>enp2s0（根據實際網卡名稱修改）</code>，詢問你：</p>
+<ul>
+<li>使用者名稱（ISP 提供）</li>
+<li>密碼</li>
+<li>是否自動撥號</li>
+<li>是否修改 <code>/etc/resolv.conf</code><br>
+完成後會建立 <code>/etc/ppp/peers/dsl-provider</code> 和 <code>/etc/ppp/pap-secrets</code> 或 <code>chap-secrets</code></li>
+</ul>
 
       </div>
     </div>
