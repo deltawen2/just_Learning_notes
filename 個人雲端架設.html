@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>uhttpad_openwrt架站</title>
+  <title>uhttpad_openwrt架站 .md</title>
   <link rel="stylesheet" href="https://stackedit.cn/style.css" />
   <style type="text/css">
     .app--dark {
@@ -44,6 +44,15 @@
 <li><a href="#增加互動式上傳界面">增加互動式上傳界面</a>
 <ul>
 <li><a href="#建制後端驗證處理程序">建制後端驗證處理程序</a></li>
+</ul>
+</li>
+<li><a href="#開啟目錄瀏覽">開啟目錄瀏覽</a>
+<ul>
+<li><a href="#🛠️-建立目錄與檔案">🛠️ 建立目錄與檔案</a></li>
+<li><a href="#🧾-修改-uhttpd-設定">🧾 修改 uhttpd 設定</a></li>
+<li><a href="#🔁-重新啟動-uhttpd">🔁 重新啟動 uhttpd</a></li>
+<li><a href="#etcconfiguhttpd-完整內容">/etc/config/uhttpd 完整內容</a></li>
+<li><a href="#建立-etcmime.types">建立 /etc/mime.types</a></li>
 </ul>
 </li>
 </ul>
@@ -226,7 +235,7 @@ cgitb<span class="token punctuation">.</span>enable<span class="token punctuatio
 <span class="token comment"># 檔案上傳的目標目錄。</span>
 <span class="token comment"># !!! 警告：請務必將此路徑修改為非網頁公開的目錄，以確保安全。</span>
 <span class="token comment"># 例如：/root/uploads/ 或 /mnt/sda1/uploads/</span>
-UPLOAD_DIR <span class="token operator">=</span> <span class="token string">"/*****/*****/"</span> <span class="token comment"># 您目前設定的路徑。再次強烈建議修改為 /root/uploads/</span>
+UPLOAD_DIR <span class="token operator">=</span> <span class="token string">"/www/uploads/"</span> <span class="token comment"># 您目前設定的路徑。再次強烈建議修改為 /root/uploads/</span>
 
 <span class="token comment"># 確保上傳目錄存在</span>
 <span class="token keyword">if</span> <span class="token operator">not</span> os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>exists<span class="token punctuation">(</span>UPLOAD_DIR<span class="token punctuation">)</span><span class="token punctuation">:</span>
@@ -372,6 +381,123 @@ UPLOAD_DIR <span class="token operator">=</span> <span class="token string">"/**
 </code></pre>
 <pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#設定執行權限</span>
 <span class="token function">chmod</span> +x /www/cgi-bin/upload.py
+</code></pre>
+<h1 id="開啟目錄瀏覽"><span class="prefix"></span><span class="content">開啟目錄瀏覽</span><span class="suffix"></span></h1>
+<blockquote>
+<p>📁 目標<br>
+讓外部使用者可以透過瀏覽器存取 <code>http://your-ip/image/</code>，並看到 <code>/www/image</code> 目錄下的檔案列表，但無法修改或上傳。</p>
+</blockquote>
+<h2 id="🛠️-建立目錄與檔案"><span class="prefix"></span><span class="content">🛠️ 建立目錄與檔案</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">mkdir</span> -p /www/image
+<span class="token function">chmod</span> 755 /www/image
+</code></pre>
+<h2 id="🧾-修改-uhttpd-設定"><span class="prefix"></span><span class="content">🧾 修改 uhttpd 設定</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#編輯文件</span>
+<span class="token function">vi</span> /etc/config/uhttpd
+</code></pre>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#加在config uhttpd 'main'最後一行</span>
+option list_directories <span class="token string">'1'</span>
+
+<span class="token comment">#在最下面加一組</span>
+config <span class="token function">alias</span>
+    option <span class="token function">alias</span> <span class="token string">'/image'</span>
+    option target <span class="token string">'/www/image'</span>
+
+</code></pre>
+<h2 id="🔁-重新啟動-uhttpd"><span class="prefix"></span><span class="content">🔁 重新啟動 uhttpd</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">/etc/init.d/uhttpd restart
+</code></pre>
+<h2 id="etcconfiguhttpd-完整內容"><span class="prefix"></span><span class="content">/etc/config/uhttpd 完整內容</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">config uhttpd <span class="token string">'main'</span>                         <span class="token comment"># 主 uhttpd 設定區塊</span>
+
+    listen_http <span class="token string">'0.0.0.0:80'</span>                <span class="token comment"># 監聽所有 IPv4 位址的 HTTP 連線（port 80）</span>
+    listen_http <span class="token string">'[::]:80'</span>                   <span class="token comment"># 監聽所有 IPv6 位址的 HTTP 連線（port 80）</span>
+    listen_https <span class="token string">'0.0.0.0:443'</span>              <span class="token comment"># 監聽所有 IPv4 位址的 HTTPS 連線（port 443）</span>
+    listen_https <span class="token string">'[::]:443'</span>                 <span class="token comment"># 監聽所有 IPv6 位址的 HTTPS 連線（port 443）</span>
+
+    option redirect_https <span class="token string">'0'</span>               <span class="token comment"># 不強制將 HTTP 轉導到 HTTPS（0 = 關閉）</span>
+
+    option home <span class="token string">'/www'</span>                      <span class="token comment"># 設定網站根目錄為 /www</span>
+
+    option rfc1918_filter <span class="token string">'1'</span>               <span class="token comment"># 啟用 RFC1918 私有 IP 過濾（防止 WAN 端存取 LAN）</span>
+
+    option max_requests <span class="token string">'3'</span>                 <span class="token comment"># 每個連線最多允許 3 個請求（限制資源消耗）</span>
+
+    option max_connections <span class="token string">'100'</span>            <span class="token comment"># 最大同時連線數為 100（防止過載）</span>
+
+    option cert <span class="token string">'/etc/uhttpd.crt'</span>           <span class="token comment"># HTTPS 使用的憑證檔案路徑</span>
+
+    option key <span class="token string">'/etc/uhttpd.key'</span>            <span class="token comment"># HTTPS 使用的私鑰檔案路徑</span>
+
+    option cgi_prefix <span class="token string">'/cgi-bin'</span>            <span class="token comment"># CGI 程式的 URL 前綴（例如 /cgi-bin/script.cgi）</span>
+
+    lua_prefix <span class="token string">'/cgi-bin/luci=/usr/lib/lua/luci/sgi/uhttpd.lua'</span>  <span class="token comment"># LuCI 的 Lua 處理器路徑與 URL 對應</span>
+
+    option script_timeout <span class="token string">'600'</span>             <span class="token comment"># CGI/Lua 腳本最大執行時間（秒）</span>
+
+    option network_timeout <span class="token string">'300'</span>            <span class="token comment"># 網路連線最大等待時間（秒）</span>
+
+    option http_keepalive <span class="token string">'20'</span>              <span class="token comment"># HTTP keep-alive 保持連線時間（秒）</span>
+
+    option tcp_keepalive <span class="token string">'1'</span>                <span class="token comment"># 啟用 TCP keep-alive（保持連線活性）</span>
+
+    option ubus_prefix <span class="token string">'/ubus'</span>              <span class="token comment"># 設定 ubus API 的 URL 前綴（通常用於 RPC）</span>
+
+    option list_directories <span class="token string">'1'</span>             <span class="token comment"># 啟用目錄瀏覽功能（允許列出目錄內容）</span>
+
+<span class="token comment"># ------------------------------------------------------------</span>
+
+config cert <span class="token string">'defaults'</span>                      <span class="token comment"># 預設憑證產生設定（用於 HTTPS）</span>
+
+    option days <span class="token string">'397'</span>                       <span class="token comment"># 憑證有效天數（397 天）</span>
+
+    option key_type <span class="token string">'ec'</span>                    <span class="token comment"># 使用 EC（橢圓曲線）加密類型</span>
+
+    option bits <span class="token string">'2048'</span>                      <span class="token comment"># 金鑰長度（若使用 RSA，這會生效）</span>
+
+    option ec_curve <span class="token string">'P-256'</span>                 <span class="token comment"># EC 加密使用的曲線（P-256 是常見選擇）</span>
+
+    option country <span class="token string">'ZZ'</span>                     <span class="token comment"># 憑證中的國家欄位（可自訂）</span>
+
+    option state <span class="token string">'Somewhere'</span>                <span class="token comment"># 憑證中的州/省欄位（可自訂）</span>
+
+    option location <span class="token string">'Unknown'</span>               <span class="token comment"># 憑證中的城市欄位（可自訂）</span>
+
+    option commonname <span class="token string">'OpenWrt'</span>             <span class="token comment"># 憑證中的主機名稱（通常設為裝置名）</span>
+
+<span class="token comment"># ------------------------------------------------------------</span>
+
+config <span class="token function">alias</span>                                <span class="token comment"># URL 別名設定（用於虛擬目錄）</span>
+
+    option <span class="token function">alias</span> <span class="token string">'/image'</span>                   <span class="token comment"># 設定 URL 路徑為 /image</span>
+
+    option target <span class="token string">'/www/image'</span>              <span class="token comment"># 對應實體目錄為 /www/image</span>
+
+</code></pre>
+<h2 id="建立-etcmime.types"><span class="prefix"></span><span class="content">建立 <code>/etc/mime.types</code></span><span class="suffix"></span></h2>
+<blockquote>
+<p>MIME（Multipurpose Internet Mail Extensions）類型是一種標準格式，用來告訴瀏覽器「這個檔案是什麼類型」，讓它知道該怎麼處理。</p>
+</blockquote>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">cat</span> <span class="token operator">&lt;&lt;</span> <span class="token string">'EOF'</span> <span class="token operator">&gt;</span> /etc/mime.types
+<span class="token comment"># 常見 MIME 類型對照表</span>
+text/plain       txt
+text/html        html htm
+text/css         css
+text/javascript  js
+image/jpeg       jpeg jpg
+image/png        png
+image/gif        gif
+image/webp       webp
+application/pdf  pdf
+application/zip  <span class="token function">zip</span>
+application/json json
+application/xml  xml
+audio/mpeg       mp3
+video/mp4        mp4
+EOF
+
+<span class="token comment">#重啟uhttpd</span>
+/etc/init.d/uhttpd restart
 </code></pre>
 
       </div>
