@@ -1,0 +1,201 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>docker_compose</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#🧩-docker-compose-是什麼？">🧩 docker-compose 是什麼？</a>
+<ul>
+<li><a href="#確認版本">確認版本</a></li>
+<li><a href="#建立test.yml檔案（放在你想部署的資料夾）">建立test.yml檔案（放在你想部署的資料夾）</a></li>
+<li><a href="#在該資料夾執行">在該資料夾執行</a></li>
+<li><a href="#🧠-如何容器間互通？">🧠 如何容器間互通？</a></li>
+<li><a href="#🧩-加入自訂網路（可選）">🧩 加入自訂網路（可選）</a></li>
+<li><a href="#🔍-測試互通性">🔍 測試互通性</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="🧩-docker-compose-是什麼？"><span class="prefix"></span><span class="content">🧩 docker-compose 是什麼？</span><span class="suffix"></span></h1>
+<p>它是一個工具，用來：</p>
+<ul>
+<li>
+<p>定義多個容器（服務）在一個檔案中</p>
+</li>
+<li>
+<p>自動處理網路、volume、依賴順序</p>
+</li>
+<li>
+<p>用 <code>docker-compose up</code> 一鍵啟動所有容器</p>
+</li>
+</ul>
+<h2 id="確認版本"><span class="prefix"></span><span class="content">確認版本</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">docker compose version
+</code></pre>
+<h2 id="建立test.yml檔案（放在你想部署的資料夾）"><span class="prefix"></span><span class="content">建立test.yml檔案（放在你想部署的資料夾）</span><span class="suffix"></span></h2>
+<pre class=" language-yaml"><code class="prism  language-yaml"><span class="token key atrule">version</span><span class="token punctuation">:</span> <span class="token string">'3.8'</span>
+
+<span class="token key atrule">services</span><span class="token punctuation">:</span>
+  <span class="token key atrule">stirling-pdf</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> docker.stirlingpdf.com/stirlingtools/stirling<span class="token punctuation">-</span>pdf<span class="token punctuation">:</span>latest
+    <span class="token key atrule">container_name</span><span class="token punctuation">:</span> stirling<span class="token punctuation">-</span>pdf
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"8080:8080"</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+
+  <span class="token key atrule">drawio</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> jgraph/drawio
+    <span class="token key atrule">container_name</span><span class="token punctuation">:</span> drawio
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"8081:8080"</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+
+  <span class="token key atrule">stackedit-plus</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> mafgwo/stackedit<span class="token punctuation">-</span>plus<span class="token punctuation">:</span>latest
+    <span class="token key atrule">container_name</span><span class="token punctuation">:</span> stackedit<span class="token punctuation">-</span>plus
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"8082:8080"</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+
+</code></pre>
+<h2 id="在該資料夾執行"><span class="prefix"></span><span class="content">在該資料夾執行</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">docker compose up -d
+</code></pre>
+<p>這會：</p>
+<ul>
+<li>
+<p>下載 image（如果尚未下載）</p>
+</li>
+<li>
+<p>建立並啟動容器</p>
+</li>
+<li>
+<p>背景執行（<code>-d</code>）</p>
+</li>
+</ul>
+<h3 id="🧹-常用指令"><span class="prefix"></span><span class="content">🧹 常用指令</span><span class="suffix"></span></h3>
+
+<table>
+<thead>
+<tr>
+<th>指令</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docker compose up -d</code></td>
+<td>啟動所有服務</td>
+</tr>
+<tr>
+<td><code>docker compose down</code></td>
+<td>停止並移除所有容器、網路</td>
+</tr>
+<tr>
+<td><code>docker compose ps</code></td>
+<td>查看容器狀態</td>
+</tr>
+<tr>
+<td><code>docker compose logs -f</code></td>
+<td>即時查看所有容器日誌</td>
+</tr>
+<tr>
+<td><code>docker compose restart</code></td>
+<td>重新啟動所有容器</td>
+</tr>
+</tbody>
+</table><hr>
+<p>要讓這三個容器互通網路，<code>docker-compose</code> 會自動幫你建立一個虛擬網路，讓所有服務彼此用「服務名稱」當主機名稱來通訊。你不需要額外設定 bridge 或 IP，只要用 <code>stirling-pdf</code>, <code>drawio</code>, <code>stackedit-plus</code> 當作 hostname 就能互相連線。</p>
+<hr>
+<h2 id="🧠-如何容器間互通？"><span class="prefix"></span><span class="content">🧠 如何容器間互通？</span><span class="suffix"></span></h2>
+<p>在 <code>docker-compose</code> 中：</p>
+<ul>
+<li>所有服務預設會加入同一個網路（除非你指定）</li>
+<li>可以用服務名稱當作 DNS 名稱來連線</li>
+</ul>
+<p>例如：</p>
+<ul>
+<li><code>drawio</code> 可以用 <code>http://stackedit-plus:8080</code> 連到 StackEdit</li>
+<li><code>stirling-pdf</code> 可以用 <code>http://drawio:8080</code> 連到 <a href="http://Draw.io">Draw.io</a></li>
+</ul>
+<hr>
+<h2 id="🧩-加入自訂網路（可選）"><span class="prefix"></span><span class="content">🧩 加入自訂網路（可選）</span><span class="suffix"></span></h2>
+<p>如果你想明確定義網路名稱，可以這樣做：</p>
+<pre class=" language-yaml"><code class="prism  language-yaml"><span class="token key atrule">version</span><span class="token punctuation">:</span> <span class="token string">'3.8'</span>
+
+<span class="token key atrule">services</span><span class="token punctuation">:</span>
+  <span class="token key atrule">stirling-pdf</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> docker.stirlingpdf.com/stirlingtools/stirling<span class="token punctuation">-</span>pdf<span class="token punctuation">:</span>latest
+    <span class="token key atrule">container_name</span><span class="token punctuation">:</span> stirling<span class="token punctuation">-</span>pdf
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"8080:8080"</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+    <span class="token key atrule">networks</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> internal<span class="token punctuation">-</span>net
+
+  <span class="token key atrule">drawio</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> jgraph/drawio
+    <span class="token key atrule">container_name</span><span class="token punctuation">:</span> drawio
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"8081:8080"</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+    <span class="token key atrule">networks</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> internal<span class="token punctuation">-</span>net
+
+  <span class="token key atrule">stackedit-plus</span><span class="token punctuation">:</span>
+    <span class="token key atrule">image</span><span class="token punctuation">:</span> mafgwo/stackedit<span class="token punctuation">-</span>plus<span class="token punctuation">:</span>latest
+    <span class="token key atrule">container_name</span><span class="token punctuation">:</span> stackedit<span class="token punctuation">-</span>plus
+    <span class="token key atrule">ports</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> <span class="token string">"8082:8080"</span>
+    <span class="token key atrule">restart</span><span class="token punctuation">:</span> unless<span class="token punctuation">-</span>stopped
+    <span class="token key atrule">networks</span><span class="token punctuation">:</span>
+      <span class="token punctuation">-</span> internal<span class="token punctuation">-</span>net
+
+<span class="token key atrule">networks</span><span class="token punctuation">:</span>
+  <span class="token key atrule">internal-net</span><span class="token punctuation">:</span>
+    <span class="token key atrule">driver</span><span class="token punctuation">:</span> bridge
+</code></pre>
+<p>這樣三個容器都在 <code>internal-net</code> 裡，彼此可以用服務名稱互相連線。</p>
+<hr>
+<h2 id="🔍-測試互通性"><span class="prefix"></span><span class="content">🔍 測試互通性</span><span class="suffix"></span></h2>
+<p>你可以進入其中一個容器測試連線：</p>
+<pre class=" language-bash"><code class="prism  language-bash">docker <span class="token function">exec</span> -it stirling-pdf sh
+<span class="token comment"># 然後在容器內執行：</span>
+<span class="token function">wget</span> http://drawio:8080
+</code></pre>
+<p>如果成功，代表網路互通沒問題。</p>
+<hr>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
