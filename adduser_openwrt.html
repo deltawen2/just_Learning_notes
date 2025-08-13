@@ -43,6 +43,15 @@
 <li><a href="#建立密碼-1">建立密碼</a></li>
 </ul>
 </li>
+<li><a href="#補充說明">補充說明</a>
+<ul>
+<li><a href="#🧾-第一行：etcpasswd-的新增項目">🧾 第一行：/etc/passwd 的新增項目</a></li>
+<li><a href="#🔒-第二行：etcshadow-的新增項目">🔒 第二行：/etc/shadow 的新增項目</a></li>
+<li><a href="#🧠-安全性與建議">🧠 安全性與建議</a></li>
+<li><a href="#🧾-第一行：etcpasswd-的新增項目-1">🧾 第一行：/etc/passwd 的新增項目</a></li>
+<li><a href="#🔒-第二行：etcshadow-的新增項目-1">🔒 第二行：/etc/shadow 的新增項目</a></li>
+</ul>
+</li>
 </ul>
 
     </div>
@@ -81,6 +90,207 @@
 <h2 id="建立密碼-1"><span class="prefix"></span><span class="content">建立密碼</span><span class="suffix"></span></h2>
 <pre class=" language-bash"><code class="prism  language-bash"><span class="token function">passwd</span> omagawen
 </code></pre>
+<h1 id="補充說明"><span class="prefix"></span><span class="content">補充說明</span><span class="suffix"></span></h1>
+<p>這兩行命令直接修改了 Linux 系統的使用者帳號資料庫 <code>/etc/passwd</code> 和 <code>/etc/shadow</code>，目的是<strong>手動新增一個 UID/GID 為 0 的超級使用者帳號 <code>deltawen</code></strong>。這樣的操作具有極高的權限風險與安全性影響。下面是詳細解析：</p>
+<hr>
+<h2 id="🧾-第一行：etcpasswd-的新增項目"><span class="prefix"></span><span class="content">🧾 第一行：<code>/etc/passwd</code> 的新增項目</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token keyword">echo</span> <span class="token string">'deltawen:x:0:0:deltawen:/home/deltawen:/bin/ash'</span> <span class="token operator">&gt;&gt;</span> /etc/passwd
+</code></pre>
+<p>這行將以下內容追加到 <code>/etc/passwd</code>：</p>
+
+<table>
+<thead>
+<tr>
+<th>欄位位置</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>deltawen</code></td>
+<td>使用者名稱</td>
+</tr>
+<tr>
+<td><code>x</code></td>
+<td>密碼欄位（實際密碼儲存在 <code>/etc/shadow</code>）</td>
+</tr>
+<tr>
+<td><code>0</code></td>
+<td>使用者 ID（UID），<strong>0 表示 root 權限</strong></td>
+</tr>
+<tr>
+<td><code>0</code></td>
+<td>群組 ID（GID），同樣是 root 群組</td>
+</tr>
+<tr>
+<td><code>deltawen</code></td>
+<td>使用者描述（通常是全名或備註）</td>
+</tr>
+<tr>
+<td><code>/home/deltawen</code></td>
+<td>使用者主目錄</td>
+</tr>
+<tr>
+<td><code>/bin/ash</code></td>
+<td>登入後使用的 shell（這裡是 BusyBox 的 ash shell）</td>
+</tr>
+</tbody>
+</table><p>🔐 <strong>重點：UID/GID 為 0 表示此帳號擁有 root 權限。</strong></p>
+<hr>
+<h2 id="🔒-第二行：etcshadow-的新增項目"><span class="prefix"></span><span class="content">🔒 第二行：<code>/etc/shadow</code> 的新增項目</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token keyword">echo</span> <span class="token string">'deltawen::0:0:99999:7:::'</span> <span class="token operator">&gt;&gt;</span> /etc/shadow
+</code></pre>
+<p>這行將以下內容追加到 <code>/etc/shadow</code>：</p>
+
+<table>
+<thead>
+<tr>
+<th>欄位位置</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>deltawen</code></td>
+<td>使用者名稱</td>
+</tr>
+<tr>
+<td><code></code> (空白)</td>
+<td>密碼欄位，<strong>空白表示無密碼即可登入</strong>（極度危險）</td>
+</tr>
+<tr>
+<td><code>0</code></td>
+<td>上次變更密碼的日期（自 1970 年起的天數）</td>
+</tr>
+<tr>
+<td><code>0</code></td>
+<td>密碼可變更的最小天數</td>
+</tr>
+<tr>
+<td><code>99999</code></td>
+<td>密碼需變更的最大天數（99999 表示幾乎永不過期）</td>
+</tr>
+<tr>
+<td><code>7</code></td>
+<td>密碼過期前的警告天數</td>
+</tr>
+<tr>
+<td><code></code></td>
+<td>密碼過期後的帳號停用天數（空白表示不會停用）</td>
+</tr>
+<tr>
+<td><code></code></td>
+<td>帳號停用日期（空白表示不會停用）</td>
+</tr>
+</tbody>
+</table><p>⚠️ <strong>重點：空密碼 + root 權限 = 極高風險。任何人只要知道帳號名稱就能登入並取得 root 權限。</strong></p>
+<hr>
+<h2 id="🧠-安全性與建議"><span class="prefix"></span><span class="content">🧠 安全性與建議</span><span class="suffix"></span></h2>
+<p>這種做法在某些嵌入式系統或救援模式下可能是必要的，但在一般系統中：</p>
+<ul>
+<li>✅ <strong>應使用 <code>useradd</code> 或 <code>adduser</code> 工具來建立帳號，並設定密碼與權限。</strong></li>
+<li>❌ <strong>不應直接編輯 <code>/etc/passwd</code> 和 <code>/etc/shadow</code>，尤其是用 UID 0 且無密碼。</strong></li>
+<li>🔐 <strong>應立即設定密碼：</strong><pre class=" language-bash"><code class="prism  language-bash"><span class="token function">passwd</span> deltawen
+</code></pre>
+</li>
+<li>🧹 若是測試用帳號，應在使用後刪除：<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">userdel</span> -r deltawen
+</code></pre>
+</li>
+</ul>
+<hr>
+<hr>
+<p>這組命令看起來像是在建立一個<strong>非 root UID/GID 的使用者 <code>omagawen</code></strong>，但卻給了它一個<strong>空密碼且密碼資訊與 root 相同</strong>的 <code>/etc/shadow</code> 設定。這會造成<strong>權限與安全性不一致的問題</strong>。讓我來逐欄解析並指出潛在風險與建議。</p>
+<hr>
+<h2 id="🧾-第一行：etcpasswd-的新增項目-1"><span class="prefix"></span><span class="content">🧾 第一行：<code>/etc/passwd</code> 的新增項目</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token keyword">echo</span> <span class="token string">'omagawen:x:1000:1000:omagawen:/home/omagawen:/bin/ash'</span> <span class="token operator">&gt;&gt;</span> /etc/passwd
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>欄位</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>omagawen</code></td>
+<td>使用者名稱</td>
+</tr>
+<tr>
+<td><code>x</code></td>
+<td>密碼欄位（實際密碼儲存在 <code>/etc/shadow</code>）</td>
+</tr>
+<tr>
+<td><code>1000</code></td>
+<td>UID，代表一般使用者（非 root）</td>
+</tr>
+<tr>
+<td><code>1000</code></td>
+<td>GID，使用者的主要群組</td>
+</tr>
+<tr>
+<td><code>omagawen</code></td>
+<td>使用者描述</td>
+</tr>
+<tr>
+<td><code>/home/omagawen</code></td>
+<td>主目錄</td>
+</tr>
+<tr>
+<td><code>/bin/ash</code></td>
+<td>使用的 shell（BusyBox 的 ash）</td>
+</tr>
+</tbody>
+</table><p>✅ 這是標準的一般使用者設定。</p>
+<hr>
+<h2 id="🔒-第二行：etcshadow-的新增項目-1"><span class="prefix"></span><span class="content">🔒 第二行：<code>/etc/shadow</code> 的新增項目</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token keyword">echo</span> <span class="token string">'omagawen::0:0:99999:7:::'</span> <span class="token operator">&gt;&gt;</span> /etc/shadow
+</code></pre>
+<p>這裡的問題就出現了。雖然 <code>/etc/passwd</code> 給的是 UID 1000，但 <code>/etc/shadow</code> 的設定卻是：</p>
+
+<table>
+<thead>
+<tr>
+<th>欄位</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>omagawen</code></td>
+<td>使用者名稱</td>
+</tr>
+<tr>
+<td><code></code> (空白)</td>
+<td>密碼欄位 → <strong>空密碼，任何人可登入</strong></td>
+</tr>
+<tr>
+<td><code>0</code></td>
+<td>密碼最後變更日（1970 年）</td>
+</tr>
+<tr>
+<td><code>0</code></td>
+<td>密碼可變更的最小天數</td>
+</tr>
+<tr>
+<td><code>99999</code></td>
+<td>密碼需變更的最大天數</td>
+</tr>
+<tr>
+<td><code>7</code></td>
+<td>密碼過期前的警告天數</td>
+</tr>
+<tr>
+<td><code></code></td>
+<td>密碼過期後的停用天數</td>
+</tr>
+<tr>
+<td><code></code></td>
+<td>帳號停用日期</td>
+</tr>
+</tbody>
+</table><hr>
 
       </div>
     </div>
