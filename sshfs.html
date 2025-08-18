@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>sshfs</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#使用-sshfs-掛載遠端目錄（類似-nfs，但透過-ssh）">使用 sshfs 掛載遠端目錄（類似 NFS，但透過 SSH）</a>
+<ul>
+<li><a href="#ubuntu">ubuntu</a></li>
+<li><a href="#openwrt">openwrt</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="使用-sshfs-掛載遠端目錄（類似-nfs，但透過-ssh）"><span class="prefix"></span><span class="content">使用 <code>sshfs</code> 掛載遠端目錄（類似 NFS，但透過 SSH）</span><span class="suffix"></span></h1>
+<h2 id="ubuntu"><span class="prefix"></span><span class="content">ubuntu</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> apt <span class="token function">install</span> sshfs  <span class="token comment"># 如果尚未安裝</span>
+<span class="token function">mkdir</span> -p /mnt/wwwnas
+<span class="token function">sudo</span> sshfs root@192.168.99.3:/www/uploads /mnt/wwwnas
+<span class="token function">ls</span> /mnt/wwwnas
+
+<span class="token function">sudo</span> <span class="token function">df</span> -hT <span class="token comment">#列出FUSE 類型掛載</span>
+
+</code></pre>
+<h2 id="openwrt"><span class="prefix"></span><span class="content">openwrt</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 安裝必要套件</span>
+opkg update
+opkg <span class="token function">install</span> kmod-fuse fuse-utils sshfs
+<span class="token comment">#確認 `/dev/fuse` 存在</span>
+<span class="token function">ls</span> -l /dev/fuse
+<span class="token comment">#若不存在，手動載入</span>
+insmod fuse
+<span class="token comment">#建立本地掛載點</span>
+<span class="token function">mkdir</span> -p /mnt/wwwnas
+<span class="token comment">#掛載指令（手動）</span>
+sshfs -o reconnect,ServerAliveInterval<span class="token operator">=</span>15,ServerAliveCountMax<span class="token operator">=</span>3 root@192.168.99.7:/www/uploads /mnt/wwwnas
+</code></pre>
+<h3 id="🧩-指令結構拆解"><span class="prefix"></span><span class="content">🧩 指令結構拆解</span><span class="suffix"></span></h3>
+
+<table>
+<thead>
+<tr>
+<th>部分</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sshfs</code></td>
+<td>使用 SSHFS 工具來掛載遠端目錄</td>
+</tr>
+<tr>
+<td><code>-o reconnect</code></td>
+<td>若連線中斷，SSHFS 會自動嘗試重新連線並重新掛載</td>
+</tr>
+<tr>
+<td><code>ServerAliveInterval=15</code></td>
+<td>SSH 客戶端每 15 秒向遠端發送一個 keep-alive 封包，防止連線閒置被斷線</td>
+</tr>
+<tr>
+<td><code>ServerAliveCountMax=3</code></td>
+<td>若連續 3 次 keep-alive 沒有回應，SSH 連線會被視為失敗並中斷</td>
+</tr>
+<tr>
+<td><code>root@192.168.99.7:/www/uploads</code></td>
+<td>遠端主機的登入帳號與目錄位置：使用 root 帳號登入 IP 為 192.168.99.7 的主機，掛載 <code>/www/uploads</code></td>
+</tr>
+<tr>
+<td><code>/mnt/wwwnas</code></td>
+<td>本機掛載點，遠端目錄會映射到這個位置</td>
+</tr>
+</tbody>
+</table><hr>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
