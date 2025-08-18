@@ -7,6 +7,8 @@
 > [scp傳檔](https://deltawen2.github.io/just_Learning_notes/scp傳檔.html)
 > 
 >[nano快捷](https://deltawen2.github.io/just_Learning_notes/nano快捷.html)
+>
+> [sshfs掛載遠端目錄](https://deltawen2.github.io/just_Learning_notes/sshfs.html)
 
 
 ## openwrt
