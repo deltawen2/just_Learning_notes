@@ -44,7 +44,7 @@
 >
 > [adduser_ubuntu](https://deltawen2.github.io/just_Learning_notes/adduser_ubuntu.html)
 >
-> [systemctl](https://deltawen2.github.io/just_Learning_notes/systemctl.html)
+> [systemctl服務](https://deltawen2.github.io/just_Learning_notes/systemctl.html)
 
 
 ## docker
