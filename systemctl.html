@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>systemctl</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#建立一個-systemd-服務">建立一個 systemd 服務</a>
+<ul>
+<li><a href="#建立建立目錄.sh">建立建立目錄.sh</a></li>
+<li><a href="#建立-systemd-服務檔案">建立 systemd 服務檔案</a></li>
+<li><a href="#啟動服務與測試">啟動服務與測試</a></li>
+<li><a href="#工作流">工作流</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="建立一個-systemd-服務"><span class="prefix"></span><span class="content">建立一個 systemd 服務</span><span class="suffix"></span></h1>
+<blockquote>
+<p>開機時自動建立目錄</p>
+</blockquote>
+<h2 id="建立建立目錄.sh"><span class="prefix"></span><span class="content"><a href="http://xn--b0ta015p8qdba1238a.sh">建立建立目錄.sh</a></span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> <span class="token function">nano</span> /usr/local/bin/init-shm-folders.sh
+</code></pre>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token shebang important">#!/bin/bash</span>
+<span class="token function">mkdir</span> -p /dev/shm/Downloads 
+<span class="token function">mkdir</span> -p /dev/shm/Picture 
+<span class="token function">mkdir</span> -p /dev/shm/Screenshots
+
+<span class="token function">chmod</span> 777 /dev/shm/Downloads /dev/shm/Picture  /dev/shm/Screenshots
+</code></pre>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#設定執行權限</span>
+<span class="token function">sudo</span> <span class="token function">chmod</span> +x /usr/local/bin/init-shm-folders.sh
+</code></pre>
+<h2 id="建立-systemd-服務檔案"><span class="prefix"></span><span class="content">建立 systemd 服務檔案</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> <span class="token function">nano</span> /etc/systemd/system/mkdir-shm.service
+</code></pre>
+<pre class=" language-ini"><code class="prism  language-ini"><span class="token selector">[Unit]</span>
+<span class="token constant">Description</span><span class="token attr-value"><span class="token punctuation">=</span>Create /dev/shm folders at boot         # 服務說明，顯示於 systemctl status</span>
+<span class="token constant">DefaultDependencies</span><span class="token attr-value"><span class="token punctuation">=</span>no                               # 禁用預設依賴，讓你能控制啟動順序</span>
+<span class="token constant">After</span><span class="token attr-value"><span class="token punctuation">=</span>local-fs.target                                # 等本地檔案系統掛載完成後再執行</span>
+<span class="token constant">Before</span><span class="token attr-value"><span class="token punctuation">=</span>basic.target                                  # 在 basic.target 之前執行，確保早期建立目錄</span>
+
+<span class="token selector">[Service]</span>
+<span class="token constant">Type</span><span class="token attr-value"><span class="token punctuation">=</span>oneshot                                         # 一次性執行，不常駐</span>
+<span class="token constant">ExecStart</span><span class="token attr-value"><span class="token punctuation">=</span>/usr/local/bin/init-shm-folders.sh         # 執行的腳本，負責建立目錄</span>
+<span class="token constant">RemainAfterExit</span><span class="token attr-value"><span class="token punctuation">=</span>true                                 # 執行完仍視為 active，避免被 systemd 停用</span>
+
+<span class="token selector">[Install]</span>
+<span class="token constant">WantedBy</span><span class="token attr-value"><span class="token punctuation">=</span>multi-user.target                           # 在 multi-user.target 階段啟動（正常開機流程）</span>
+
+</code></pre>
+<h2 id="啟動服務與測試"><span class="prefix"></span><span class="content">啟動服務與測試</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> systemctl daemon-reexec  <span class="token comment">#重新執行 systemd 的主程序（daemon）</span>
+<span class="token function">sudo</span> systemctl <span class="token function">enable</span> mkdir-shm.service <span class="token comment">#開機啟動</span>
+<span class="token function">sudo</span> systemctl start mkdir-shm.service  <span class="token comment">#立即啟動</span>
+
+</code></pre>
+<h2 id="工作流"><span class="prefix"></span><span class="content">工作流</span><span class="suffix"></span></h2>
+<pre class=" language-mermaid"><svg id="mermaid-svg-topDSqLRnk4EoT1w" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="516.3125" style="max-width: 198.15625px;" viewBox="0 0 198.15625 516.3125"><style>#mermaid-svg-topDSqLRnk4EoT1w{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#000000;}#mermaid-svg-topDSqLRnk4EoT1w .error-icon{fill:#552222;}#mermaid-svg-topDSqLRnk4EoT1w .error-text{fill:#552222;stroke:#552222;}#mermaid-svg-topDSqLRnk4EoT1w .edge-thickness-normal{stroke-width:2px;}#mermaid-svg-topDSqLRnk4EoT1w .edge-thickness-thick{stroke-width:3.5px;}#mermaid-svg-topDSqLRnk4EoT1w .edge-pattern-solid{stroke-dasharray:0;}#mermaid-svg-topDSqLRnk4EoT1w .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-svg-topDSqLRnk4EoT1w .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-svg-topDSqLRnk4EoT1w .marker{fill:#666;stroke:#666;}#mermaid-svg-topDSqLRnk4EoT1w .marker.cross{stroke:#666;}#mermaid-svg-topDSqLRnk4EoT1w svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-svg-topDSqLRnk4EoT1w .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#000000;}#mermaid-svg-topDSqLRnk4EoT1w .cluster-label text{fill:#333;}#mermaid-svg-topDSqLRnk4EoT1w .cluster-label span{color:#333;}#mermaid-svg-topDSqLRnk4EoT1w .label text,#mermaid-svg-topDSqLRnk4EoT1w span{fill:#000000;color:#000000;}#mermaid-svg-topDSqLRnk4EoT1w .node rect,#mermaid-svg-topDSqLRnk4EoT1w .node circle,#mermaid-svg-topDSqLRnk4EoT1w .node ellipse,#mermaid-svg-topDSqLRnk4EoT1w .node polygon,#mermaid-svg-topDSqLRnk4EoT1w .node path{fill:#eee;stroke:#999;stroke-width:1px;}#mermaid-svg-topDSqLRnk4EoT1w .node .label{text-align:center;}#mermaid-svg-topDSqLRnk4EoT1w .node.clickable{cursor:pointer;}#mermaid-svg-topDSqLRnk4EoT1w .arrowheadPath{fill:#333333;}#mermaid-svg-topDSqLRnk4EoT1w .edgePath .path{stroke:#666;stroke-width:1.5px;}#mermaid-svg-topDSqLRnk4EoT1w .flowchart-link{stroke:#666;fill:none;}#mermaid-svg-topDSqLRnk4EoT1w .edgeLabel{background-color:white;text-align:center;}#mermaid-svg-topDSqLRnk4EoT1w .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mermaid-svg-topDSqLRnk4EoT1w .cluster rect{fill:hsl(210,66.6666666667%,95%);stroke:#26a;stroke-width:1px;}#mermaid-svg-topDSqLRnk4EoT1w .cluster text{fill:#333;}#mermaid-svg-topDSqLRnk4EoT1w .cluster span{color:#333;}#mermaid-svg-topDSqLRnk4EoT1w div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(-160,0%,93.3333333333%);border:1px solid #26a;border-radius:2px;pointer-events:none;z-index:100;}#mermaid-svg-topDSqLRnk4EoT1w:root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#mermaid-svg-topDSqLRnk4EoT1w flowchart-v2{fill:apa;}</style><g transform="translate(0, 0)"><marker id="flowchart-pointEnd" class="marker flowchart" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-pointStart" class="marker flowchart" viewBox="0 0 10 10" refX="0" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-circleEnd" class="marker flowchart" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="flowchart-circleStart" class="marker flowchart" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="flowchart-crossEnd" class="marker cross flowchart" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="flowchart-crossStart" class="marker cross flowchart" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M99.078125,49.71875L99.078125,53.885416666666664C99.078125,58.052083333333336,99.078125,66.38541666666667,99.078125,74.71875C99.078125,83.05208333333333,99.078125,91.38541666666667,99.078125,95.55208333333333L99.078125,99.71875" id="L-A-B" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-A LE-B" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M99.078125,141.4375L99.078125,145.60416666666666C99.078125,149.77083333333334,99.078125,158.10416666666666,99.078125,166.4375C99.078125,174.77083333333334,99.078125,183.10416666666666,99.078125,187.27083333333334L99.078125,191.4375" id="L-B-C" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-B LE-C" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M99.078125,233.15625L99.078125,237.32291666666666C99.078125,241.48958333333334,99.078125,249.82291666666666,99.078125,258.15625C99.078125,266.4895833333333,99.078125,274.8229166666667,99.078125,278.9895833333333L99.078125,283.15625" id="L-C-D" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-C LE-D" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M99.078125,324.875L99.078125,329.0416666666667C99.078125,333.2083333333333,99.078125,341.5416666666667,99.078125,349.875C99.078125,358.2083333333333,99.078125,366.5416666666667,99.078125,370.7083333333333L99.078125,374.875" id="L-D-E" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-D LE-E" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path><path d="M99.078125,416.59375L99.078125,420.7604166666667C99.078125,424.9270833333333,99.078125,433.2604166666667,99.078125,441.59375C99.078125,449.9270833333333,99.078125,458.2604166666667,99.078125,462.4270833333333L99.078125,466.59375" id="L-E-F" class=" edge-thickness-normal edge-pattern-solid flowchart-link LS-E LE-F" style="fill:none;" marker-end="url(#flowchart-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default default" id="flowchart-A-110" transform="translate(99.078125, 28.859375)"><rect class="basic label-container" style="" rx="0" ry="0" x="-23.5078125" y="-20.859375" width="47.015625" height="41.71875"></rect><g class="label" style="" transform="translate(-16.0078125, -13.359375)"><foreignObject width="32.015625" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">開機</span></div></foreignObject></g></g><g class="node default default" id="flowchart-B-111" transform="translate(99.078125, 120.578125)"><rect class="basic label-container" style="" rx="0" ry="0" x="-90.625" y="-20.859375" width="181.25" height="41.71875"></rect><g class="label" style="" transform="translate(-83.125, -13.359375)"><foreignObject width="166.25" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">啟動 mkdir-shm.service</span></div></foreignObject></g></g><g class="node default default" id="flowchart-C-113" transform="translate(99.078125, 212.296875)"><rect class="basic label-container" style="" rx="0" ry="0" x="-91.078125" y="-20.859375" width="182.15625" height="41.71875"></rect><g class="label" style="" transform="translate(-83.578125, -13.359375)"><foreignObject width="167.15625" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">執行 init-shm-folders.sh</span></div></foreignObject></g></g><g class="node default default" id="flowchart-D-115" transform="translate(99.078125, 304.015625)"><rect class="basic label-container" style="" rx="0" ry="0" x="-84.40625" y="-20.859375" width="168.8125" height="41.71875"></rect><g class="label" style="" transform="translate(-76.90625, -13.359375)"><foreignObject width="153.8125" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">建立 /dev/shm 資料夾</span></div></foreignObject></g></g><g class="node default default" id="flowchart-E-117" transform="translate(99.078125, 395.734375)"><rect class="basic label-container" style="" rx="0" ry="0" x="-71.5078125" y="-20.859375" width="143.015625" height="41.71875"></rect><g class="label" style="" transform="translate(-64.0078125, -13.359375)"><foreignObject width="128.015625" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">設定擁有權與權限</span></div></foreignObject></g></g><g class="node default default" id="flowchart-F-119" transform="translate(99.078125, 487.453125)"><rect class="basic label-container" style="" rx="0" ry="0" x="-87.5078125" y="-20.859375" width="175.015625" height="41.71875"></rect><g class="label" style="" transform="translate(-80.0078125, -13.359375)"><foreignObject width="160.015625" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span class="nodeLabel">使用者層級自動化可用</span></div></foreignObject></g></g></g></g></g></svg></pre>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
