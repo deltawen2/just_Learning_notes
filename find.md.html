@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>find.md</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#find-基本應用">find 基本應用</a>
+<ul>
+<li><a href="#進階">進階</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="find-基本應用"><span class="prefix"></span><span class="content">find 基本應用</span><span class="suffix"></span></h1>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">find</span> / -name <span class="token string">"file.xxx"</span>  <span class="token comment">#搜尋根目錄</span>
+<span class="token function">find</span> ~ -name <span class="token string">"file.xxx"</span>  <span class="token comment">#搜尋家目錄</span>
+</code></pre>
+<h2 id="進階"><span class="prefix"></span><span class="content">進階</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> <span class="token function">find</span> /etc -type f -exec <span class="token function">grep</span> -H <span class="token string">"espera/nova/startup"</span> <span class="token punctuation">{</span><span class="token punctuation">}</span> \<span class="token punctuation">;</span>
+</code></pre>
+<p>可以拆解成幾個部分來詳細說明：</p>
+<hr>
+<h3 id="🔍-指令功能總覽"><span class="prefix"></span><span class="content">🔍 指令功能總覽</span><span class="suffix"></span></h3>
+<p>這條指令的目的是在 <code>/etc</code> 目錄下的所有<strong>檔案</strong>中搜尋包含字串 <code>"espera/nova/startup"</code> 的行，並顯示出檔案名稱與該行內容。</p>
+<hr>
+<h3 id="🧩-指令拆解說明"><span class="prefix"></span><span class="content">🧩 指令拆解說明</span><span class="suffix"></span></h3>
+<ol>
+<li>
+<p><strong><code>find /etc</code></strong></p>
+<ul>
+<li>這是 <code>find</code> 指令的基本用法，用來在 <code>/etc</code> 目錄下進行搜尋。</li>
+<li><code>/etc</code> 是 Linux 系統中儲存設定檔的主要目錄。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>-type f</code></strong></p>
+<ul>
+<li>限定搜尋的對象是「檔案（file）」，不包含目錄或其他類型的檔案（如符號連結、裝置檔等）。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>-exec grep -H "espera/nova/startup" {} \;</code></strong></p>
+<ul>
+<li><code>-exec</code> 是 <code>find</code> 的選項之一，用來對找到的每個檔案執行指定的指令。</li>
+<li><code>grep -H "espera/nova/startup"</code> 是要執行的指令：
+<ul>
+<li><code>grep</code> 是用來搜尋文字的工具。</li>
+<li><code>-H</code> 表示在輸出結果中顯示檔案名稱（即使只搜尋一個檔案也會顯示）。</li>
+<li><code>"espera/nova/startup"</code> 是要搜尋的字串。</li>
+</ul>
+</li>
+<li><code>{}</code> 是 <code>find</code> 中的佔位符，代表目前找到的檔案。</li>
+<li><code>\;</code> 是 <code>-exec</code> 的結尾，表示指令結束。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="📌-執行結果範例"><span class="prefix"></span><span class="content">📌 執行結果範例</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash">espera@ESE1011:~$ <span class="token function">sudo</span> <span class="token function">find</span> /etc -type f -exec <span class="token function">grep</span> -H <span class="token string">"espera/nova/startup"</span> <span class="token punctuation">{</span><span class="token punctuation">}</span> \<span class="token punctuation">;</span>
+/etc/systemd/system/nova.service:ExecStart<span class="token operator">=</span>/bin/bash /opt/espera/nova/startup --rtdelay 15 --autogui --auto-resolution   <span class="token comment">#搜尋結果</span>
+espera@ESE1011:~$ <span class="token function">sudo</span> systemctl disable nova.service <span class="token comment">#關閉開機啟動</span>
+Removed /etc/systemd/system/default.target.wants/nova.service.
+espera@ESE1011:~$ 
+</code></pre>
+<h3 id="✅-使用情境"><span class="prefix"></span><span class="content">✅ 使用情境</span><span class="suffix"></span></h3>
+<p>這種指令常用於：</p>
+<ul>
+<li>搜尋設定檔中是否有某個特定路徑或參數。</li>
+<li>偵錯系統設定問題。</li>
+<li>確認某個字串是否存在於系統設定中。</li>
+</ul>
+<hr>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
