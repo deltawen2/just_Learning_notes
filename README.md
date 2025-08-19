@@ -43,6 +43,8 @@
 > [ubuntu網路設定.html](https://deltawen2.github.io/just_Learning_notes/ubuntu網路設定.html)
 >
 > [adduser_ubuntu](https://deltawen2.github.io/just_Learning_notes/adduser_ubuntu.html)
+>
+> [systemctl](https://deltawen2.github.io/just_Learning_notes/systemctl.html)
 
 
 ## docker
