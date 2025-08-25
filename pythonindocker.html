@@ -1,0 +1,317 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pythonindocker</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#python-報表自動化與-docker-部署學習筆記">Python 報表自動化與 Docker 部署學習筆記</a>
+<ul>
+<li><a href="#一、專案架構">一、專案架構</a></li>
+<li><a href="#二、腳本內容與註解">二、腳本內容與註解</a></li>
+<li><a href="#三、指令步驟與註解">三、指令步驟與註解</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <h1 id="python-報表自動化與-docker-部署學習筆記"><strong>Python 報表自動化與 Docker 部署學習筆記</strong></h1>
+<p>這份筆記記錄了如何將一個 Python 資料報表腳本，打包成 Docker 容器，並透過網頁伺服器提供服務，實現每次刷新網頁都能生成最新報表的功能。</p>
+<h2 id="一、專案架構"><strong>一、專案架構</strong></h2>
+<p>整個專案由三個核心檔案組成：</p>
+<ul>
+<li>
+<p><strong><code>app.py</code></strong>：主要的 Python 腳本，使用 <code>Flask</code> 框架來建立網頁服務。它會讀取 Excel 資料，並在每次網頁請求時重新生成報表。</p>
+</li>
+<li>
+<p><strong><code>Dockerfile</code></strong>：用於建置 Docker 映像檔的設定檔，定義了容器內的環境、安裝依賴，並啟動 <code>app.py</code> 服務。</p>
+</li>
+<li>
+<p><strong><code>Noto_Sans_TC/NotoSansTC-VariableFont_wght.ttf</code></strong>：圖表所需的字型檔，用於正確顯示中文字元。</p>
+</li>
+</ul>
+<h2 id="二、腳本內容與註解"><strong>二、腳本內容與註解</strong></h2>
+<p><strong><code>app.py</code> 內容</strong></p>
+<p>Python</p>
+<pre class=" language-py"><code class="prism  language-py"><span class="token keyword">import</span> pandas <span class="token keyword">as</span> pd
+<span class="token keyword">import</span> seaborn <span class="token keyword">as</span> sns
+<span class="token keyword">import</span> matplotlib<span class="token punctuation">.</span>pyplot <span class="token keyword">as</span> plt
+<span class="token keyword">from</span> matplotlib <span class="token keyword">import</span> font_manager
+<span class="token keyword">import</span> os
+<span class="token keyword">from</span> flask <span class="token keyword">import</span> Flask<span class="token punctuation">,</span> render_template_string<span class="token punctuation">,</span> send_from_directory
+<span class="token keyword">import</span> datetime
+
+<span class="token comment"># ────────────────────────────────────────────────</span>
+<span class="token comment"># 📁 [1] 設定參數與字型</span>
+<span class="token comment"># ────────────────────────────────────────────────</span>
+app <span class="token operator">=</span> Flask<span class="token punctuation">(</span>__name__<span class="token punctuation">)</span>
+font_path <span class="token operator">=</span> <span class="token string">"Noto_Sans_TC/NotoSansTC-VariableFont_wght.ttf"</span>
+font_prop <span class="token operator">=</span> font_manager<span class="token punctuation">.</span>FontProperties<span class="token punctuation">(</span>fname<span class="token operator">=</span>font_path<span class="token punctuation">)</span>
+
+<span class="token comment"># 從環境變數獲取 Excel 檔案路徑，如果沒有則使用預設值</span>
+excel_file <span class="token operator">=</span> os<span class="token punctuation">.</span>getenv<span class="token punctuation">(</span><span class="token string">"EXCEL_FILE_PATH"</span><span class="token punctuation">,</span> <span class="token string">"Incoming_Goods_Inspection_List_02072025.xlsx"</span><span class="token punctuation">)</span>
+sheet_name <span class="token operator">=</span> <span class="token string">"Complaints"</span>
+type_col <span class="token operator">=</span> <span class="token string">"Type of defect"</span>
+supplier_col <span class="token operator">=</span> <span class="token string">"Supplier"</span>
+date_col <span class="token operator">=</span> <span class="token string">"Date"</span>
+
+output_dir <span class="token operator">=</span> <span class="token string">"defect_reports"</span>
+
+<span class="token comment"># ────────────────────────────────────────────────</span>
+<span class="token comment"># 📝 [2] 報表生成函數</span>
+<span class="token comment"># ────────────────────────────────────────────────</span>
+<span class="token keyword">def</span> <span class="token function">generate_reports</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""負責讀取 Excel、生成所有圖表並儲存為 PNG 檔案。"""</span>
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string">"🔄 正在重新生成報表..."</span><span class="token punctuation">)</span>
+    <span class="token comment"># 每次生成前先清空舊的圖表檔案</span>
+    <span class="token keyword">if</span> os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>exists<span class="token punctuation">(</span>output_dir<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">for</span> <span class="token builtin">file</span> <span class="token keyword">in</span> os<span class="token punctuation">.</span>listdir<span class="token punctuation">(</span>output_dir<span class="token punctuation">)</span><span class="token punctuation">:</span>
+            os<span class="token punctuation">.</span>remove<span class="token punctuation">(</span>os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>join<span class="token punctuation">(</span>output_dir<span class="token punctuation">,</span> <span class="token builtin">file</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    os<span class="token punctuation">.</span>makedirs<span class="token punctuation">(</span>output_dir<span class="token punctuation">,</span> exist_ok<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+    <span class="token comment"># 讀取 Excel 資料</span>
+    <span class="token keyword">try</span><span class="token punctuation">:</span>
+        df <span class="token operator">=</span> pd<span class="token punctuation">.</span>read_excel<span class="token punctuation">(</span>excel_file<span class="token punctuation">,</span> sheet_name<span class="token operator">=</span>sheet_name<span class="token punctuation">)</span>
+        df<span class="token punctuation">[</span>date_col<span class="token punctuation">]</span> <span class="token operator">=</span> pd<span class="token punctuation">.</span>to_datetime<span class="token punctuation">(</span>df<span class="token punctuation">[</span>date_col<span class="token punctuation">]</span><span class="token punctuation">,</span> errors<span class="token operator">=</span><span class="token string">"coerce"</span><span class="token punctuation">)</span>
+        df<span class="token punctuation">[</span><span class="token string">"Year"</span><span class="token punctuation">]</span> <span class="token operator">=</span> df<span class="token punctuation">[</span>date_col<span class="token punctuation">]</span><span class="token punctuation">.</span>dt<span class="token punctuation">.</span>year
+        df<span class="token punctuation">[</span><span class="token string">"Quarter"</span><span class="token punctuation">]</span> <span class="token operator">=</span> df<span class="token punctuation">[</span>date_col<span class="token punctuation">]</span><span class="token punctuation">.</span>dt<span class="token punctuation">.</span>quarter
+    <span class="token keyword">except</span> FileNotFoundError<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> <span class="token string">"&lt;h2&gt;錯誤：找不到 Excel 檔案。請確認檔案路徑是否正確。&lt;/h2&gt;"</span>
+
+    <span class="token comment"># 生成各供應商的年度缺陷類型統計圖</span>
+    sns<span class="token punctuation">.</span><span class="token builtin">set</span><span class="token punctuation">(</span>style<span class="token operator">=</span><span class="token string">"whitegrid"</span><span class="token punctuation">)</span>
+    suppliers <span class="token operator">=</span> df<span class="token punctuation">[</span>supplier_col<span class="token punctuation">]</span><span class="token punctuation">.</span>dropna<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>unique<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">for</span> supplier <span class="token keyword">in</span> suppliers<span class="token punctuation">:</span>
+        supplier_df <span class="token operator">=</span> df<span class="token punctuation">[</span>df<span class="token punctuation">[</span>supplier_col<span class="token punctuation">]</span> <span class="token operator">==</span> supplier<span class="token punctuation">]</span>
+        <span class="token keyword">if</span> supplier_df<span class="token punctuation">.</span>empty<span class="token punctuation">:</span>
+            <span class="token keyword">continue</span>
+        count_df <span class="token operator">=</span> supplier_df<span class="token punctuation">.</span>groupby<span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">"Year"</span><span class="token punctuation">,</span> type_col<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>size<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reset_index<span class="token punctuation">(</span>name<span class="token operator">=</span><span class="token string">"Count"</span><span class="token punctuation">)</span>
+        plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span>figsize<span class="token operator">=</span><span class="token punctuation">(</span><span class="token builtin">max</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token builtin">len</span><span class="token punctuation">(</span>count_df<span class="token punctuation">[</span>type_col<span class="token punctuation">]</span><span class="token punctuation">.</span>unique<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">0.8</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        sns<span class="token punctuation">.</span>barplot<span class="token punctuation">(</span>data<span class="token operator">=</span>count_df<span class="token punctuation">,</span> x<span class="token operator">=</span>type_col<span class="token punctuation">,</span> y<span class="token operator">=</span><span class="token string">"Count"</span><span class="token punctuation">,</span> hue<span class="token operator">=</span><span class="token string">"Year"</span><span class="token punctuation">,</span> palette<span class="token operator">=</span><span class="token string">"tab10"</span><span class="token punctuation">)</span>
+        plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span>f<span class="token string">"{supplier} 缺陷類型年度統計"</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+        plt<span class="token punctuation">.</span>xlabel<span class="token punctuation">(</span><span class="token string">"缺陷類型"</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+        plt<span class="token punctuation">.</span>ylabel<span class="token punctuation">(</span><span class="token string">"數量"</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+        plt<span class="token punctuation">.</span>xticks<span class="token punctuation">(</span>rotation<span class="token operator">=</span><span class="token number">90</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+        plt<span class="token punctuation">.</span>legend<span class="token punctuation">(</span>title<span class="token operator">=</span><span class="token string">"year"</span><span class="token punctuation">,</span> prop<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+        plt<span class="token punctuation">.</span>tight_layout<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        safe_supplier <span class="token operator">=</span> supplier<span class="token punctuation">.</span>replace<span class="token punctuation">(</span><span class="token string">" "</span><span class="token punctuation">,</span> <span class="token string">"_"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>replace<span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">,</span> <span class="token string">"_"</span><span class="token punctuation">)</span>
+        output_path <span class="token operator">=</span> os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>join<span class="token punctuation">(</span>output_dir<span class="token punctuation">,</span> f<span class="token string">"{safe_supplier}_defect_type_by_year_chart.png"</span><span class="token punctuation">)</span>
+        plt<span class="token punctuation">.</span>savefig<span class="token punctuation">(</span>output_path<span class="token punctuation">)</span>
+        plt<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment"># 生成各供應商的年度總次數統計圖</span>
+    summary_df_year <span class="token operator">=</span> df<span class="token punctuation">.</span>groupby<span class="token punctuation">(</span><span class="token punctuation">[</span>supplier_col<span class="token punctuation">,</span> <span class="token string">"Year"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>size<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reset_index<span class="token punctuation">(</span>name<span class="token operator">=</span><span class="token string">"Total"</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span>figsize<span class="token operator">=</span><span class="token punctuation">(</span><span class="token builtin">max</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token builtin">len</span><span class="token punctuation">(</span>summary_df_year<span class="token punctuation">[</span>supplier_col<span class="token punctuation">]</span><span class="token punctuation">.</span>unique<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">0.6</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    sns<span class="token punctuation">.</span>barplot<span class="token punctuation">(</span>data<span class="token operator">=</span>summary_df_year<span class="token punctuation">,</span> x<span class="token operator">=</span>supplier_col<span class="token punctuation">,</span> y<span class="token operator">=</span><span class="token string">"Total"</span><span class="token punctuation">,</span> hue<span class="token operator">=</span><span class="token string">"Year"</span><span class="token punctuation">,</span> palette<span class="token operator">=</span><span class="token string">"tab10"</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span><span class="token string">"各供應商年度缺陷總次數統計"</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>xlabel<span class="token punctuation">(</span><span class="token string">"供應商"</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>ylabel<span class="token punctuation">(</span><span class="token string">"缺陷次數"</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>xticks<span class="token punctuation">(</span>rotation<span class="token operator">=</span><span class="token number">90</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>legend<span class="token punctuation">(</span>title<span class="token operator">=</span><span class="token string">"year"</span><span class="token punctuation">,</span> prop<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>tight_layout<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>savefig<span class="token punctuation">(</span>os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>join<span class="token punctuation">(</span>output_dir<span class="token punctuation">,</span> <span class="token string">"supplier_yearly_summary_chart.png"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+    <span class="token comment"># 生成各供應商的季度總次數統計圖</span>
+    summary_df_quarter <span class="token operator">=</span> df<span class="token punctuation">.</span>groupby<span class="token punctuation">(</span><span class="token punctuation">[</span>supplier_col<span class="token punctuation">,</span> <span class="token string">"Year"</span><span class="token punctuation">,</span> <span class="token string">"Quarter"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">.</span>size<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>reset_index<span class="token punctuation">(</span>name<span class="token operator">=</span><span class="token string">"Total"</span><span class="token punctuation">)</span>
+    summary_df_quarter<span class="token punctuation">[</span><span class="token string">"Year_Quarter"</span><span class="token punctuation">]</span> <span class="token operator">=</span> summary_df_quarter<span class="token punctuation">[</span><span class="token string">"Year"</span><span class="token punctuation">]</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span><span class="token builtin">str</span><span class="token punctuation">)</span> <span class="token operator">+</span> <span class="token string">" Q"</span> <span class="token operator">+</span> summary_df_quarter<span class="token punctuation">[</span><span class="token string">"Quarter"</span><span class="token punctuation">]</span><span class="token punctuation">.</span>astype<span class="token punctuation">(</span><span class="token builtin">str</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>figure<span class="token punctuation">(</span>figsize<span class="token operator">=</span><span class="token punctuation">(</span><span class="token builtin">max</span><span class="token punctuation">(</span><span class="token number">12</span><span class="token punctuation">,</span> <span class="token builtin">len</span><span class="token punctuation">(</span>summary_df_quarter<span class="token punctuation">[</span>supplier_col<span class="token punctuation">]</span><span class="token punctuation">.</span>unique<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token builtin">len</span><span class="token punctuation">(</span>summary_df_quarter<span class="token punctuation">[</span><span class="token string">"Year_Quarter"</span><span class="token punctuation">]</span><span class="token punctuation">.</span>unique<span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token operator">*</span> <span class="token number">0.2</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token number">6</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    sns<span class="token punctuation">.</span>barplot<span class="token punctuation">(</span>data<span class="token operator">=</span>summary_df_quarter<span class="token punctuation">,</span> x<span class="token operator">=</span>supplier_col<span class="token punctuation">,</span> y<span class="token operator">=</span><span class="token string">"Total"</span><span class="token punctuation">,</span> hue<span class="token operator">=</span><span class="token string">"Year_Quarter"</span><span class="token punctuation">,</span> palette<span class="token operator">=</span><span class="token string">"tab20"</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>title<span class="token punctuation">(</span><span class="token string">"各供應商季度缺陷總次數統計"</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>xlabel<span class="token punctuation">(</span><span class="token string">"供應商"</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>ylabel<span class="token punctuation">(</span><span class="token string">"缺陷次數"</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>xticks<span class="token punctuation">(</span>rotation<span class="token operator">=</span><span class="token number">90</span><span class="token punctuation">,</span> fontproperties<span class="token operator">=</span>font_prop<span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>legend<span class="token punctuation">(</span>title<span class="token operator">=</span><span class="token string">"year-season"</span><span class="token punctuation">,</span> prop<span class="token operator">=</span>font_prop<span class="token punctuation">,</span> loc<span class="token operator">=</span><span class="token string">"upper right"</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>tight_layout<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>savefig<span class="token punctuation">(</span>os<span class="token punctuation">.</span>path<span class="token punctuation">.</span>join<span class="token punctuation">(</span>output_dir<span class="token punctuation">,</span> <span class="token string">"supplier_quarterly_summary_chart.png"</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+    plt<span class="token punctuation">.</span>close<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> <span class="token string">"Success"</span>
+
+<span class="token comment"># ────────────────────────────────────────────────</span>
+<span class="token comment"># 🌐 [3] Flask 路由與處理邏輯</span>
+<span class="token comment"># ────────────────────────────────────────────────</span>
+@app<span class="token punctuation">.</span>route<span class="token punctuation">(</span><span class="token string">'/'</span><span class="token punctuation">)</span>
+<span class="token keyword">def</span> <span class="token function">index</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""首頁路由，每次訪問時都會重新生成報表。"""</span>
+    generate_reports<span class="token punctuation">(</span><span class="token punctuation">)</span>
+    
+    <span class="token comment"># 根據生成的圖表動態建立 HTML 頁面</span>
+    image_files <span class="token operator">=</span> <span class="token punctuation">[</span>f <span class="token keyword">for</span> f <span class="token keyword">in</span> os<span class="token punctuation">.</span>listdir<span class="token punctuation">(</span>output_dir<span class="token punctuation">)</span> <span class="token keyword">if</span> f<span class="token punctuation">.</span>endswith<span class="token punctuation">(</span><span class="token string">".png"</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+    
+    html_content <span class="token operator">=</span> f<span class="token triple-quoted-string string">"""
+    &lt;!DOCTYPE html&gt;
+    &lt;html lang="zh-TW"&gt;
+    &lt;head&gt;
+        &lt;meta charset="UTF-8"&gt;
+        &lt;title&gt;各供應商缺陷類型年度與季度統計&lt;/title&gt;
+        &lt;style&gt;
+            body {{ font-family: sans-serif; background: #f9f9f9; padding: 20px; }}
+            h1 {{ color: #0056b3; }}
+            h2 {{ color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px; }}
+            .chart {{ margin-bottom: 40px; }}
+            img {{ max-width: 100%; height: auto; border: 1px solid #ddd; box-shadow: 2px 2px 8px rgba(0,0,0,0.1); }}
+        &lt;/style&gt;
+    &lt;/head&gt;
+    &lt;body&gt;
+        &lt;h1&gt;📊 各供應商缺陷統計報表&lt;/h1&gt;
+        &lt;p&gt;最後更新時間：{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}&lt;/p&gt;
+        &lt;div class="chart"&gt;
+            &lt;h2&gt;📌 各供應商年度缺陷總次數統計&lt;/h2&gt;
+            &lt;img src="/reports/supplier_yearly_summary_chart.png" alt="年度總次數統計圖表"&gt;
+        &lt;/div&gt;
+        &lt;div class="chart"&gt;
+            &lt;h2&gt;📌 各供應商季度缺陷總次數統計&lt;/h2&gt;
+            &lt;img src="/reports/supplier_quarterly_summary_chart.png" alt="季度總次數統計圖表"&gt;
+        &lt;/div&gt;
+    """</span>
+    <span class="token keyword">for</span> image_file <span class="token keyword">in</span> <span class="token builtin">sorted</span><span class="token punctuation">(</span>image_files<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token keyword">if</span> image_file<span class="token punctuation">.</span>startswith<span class="token punctuation">(</span><span class="token string">"supplier_yearly"</span><span class="token punctuation">)</span> <span class="token operator">or</span> image_file<span class="token punctuation">.</span>startswith<span class="token punctuation">(</span><span class="token string">"supplier_quarterly"</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+            <span class="token keyword">continue</span>
+        supplier_name <span class="token operator">=</span> image_file<span class="token punctuation">.</span>replace<span class="token punctuation">(</span><span class="token string">"_defect_type_by_year_chart.png"</span><span class="token punctuation">,</span> <span class="token string">""</span><span class="token punctuation">)</span><span class="token punctuation">.</span>replace<span class="token punctuation">(</span><span class="token string">"_"</span><span class="token punctuation">,</span> <span class="token string">" "</span><span class="token punctuation">)</span>
+        html_content <span class="token operator">+=</span> f<span class="token triple-quoted-string string">"""
+        &lt;div class="chart"&gt;
+            &lt;h2&gt;{supplier_name}&lt;/h2&gt;
+            &lt;img src="/reports/{image_file}" alt="{supplier_name} 缺陷年度圖表"&gt;
+        &lt;/div&gt;
+        """</span>
+    html_content <span class="token operator">+=</span> <span class="token triple-quoted-string string">"""
+    &lt;/body&gt;
+    &lt;/html&gt;
+    """</span>
+    <span class="token keyword">return</span> render_template_string<span class="token punctuation">(</span>html_content<span class="token punctuation">)</span>
+
+@app<span class="token punctuation">.</span>route<span class="token punctuation">(</span><span class="token string">'/reports/&lt;path:filename&gt;'</span><span class="token punctuation">)</span>
+<span class="token keyword">def</span> <span class="token function">serve_images</span><span class="token punctuation">(</span>filename<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""用於提供靜態圖表檔案的路由。"""</span>
+    <span class="token keyword">return</span> send_from_directory<span class="token punctuation">(</span>output_dir<span class="token punctuation">,</span> filename<span class="token punctuation">)</span>
+
+<span class="token keyword">if</span> __name__ <span class="token operator">==</span> <span class="token string">'__main__'</span><span class="token punctuation">:</span>
+    <span class="token comment"># 啟動 Flask 服務，監聽所有 IP</span>
+    app<span class="token punctuation">.</span>run<span class="token punctuation">(</span>host<span class="token operator">=</span><span class="token string">'0.0.0.0'</span><span class="token punctuation">,</span> port<span class="token operator">=</span><span class="token number">8000</span><span class="token punctuation">)</span>
+
+</code></pre>
+<p><strong><code>Dockerfile</code> 內容</strong></p>
+<p>Dockerfile</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 使用官方 Python 3.9 映像檔作為基礎</span>
+FROM python:3.9-slim
+
+<span class="token comment"># 設定工作目錄</span>
+WORKDIR /app
+
+<span class="token comment"># 複製所有需要的檔案到容器中 (app.py, 字型檔)</span>
+COPY <span class="token keyword">.</span> /app
+
+<span class="token comment"># 執行系統套件更新並安裝時區資料</span>
+<span class="token comment"># tzdata 套件用於設定容器時區</span>
+RUN <span class="token function">apt-get</span> update <span class="token operator">&amp;&amp;</span> <span class="token function">apt-get</span> <span class="token function">install</span> -y tzdata
+
+<span class="token comment"># 設定時區為 Asia/Taipei</span>
+<span class="token comment"># 這會影響容器內 Python 程式的時間顯示</span>
+ENV TZ<span class="token operator">=</span><span class="token string">"Asia/Taipei"</span>
+
+<span class="token comment"># 安裝 Python 依賴套件，包括 Flask</span>
+RUN pip <span class="token function">install</span> --no-cache-dir pandas matplotlib seaborn openpyxl flask
+
+<span class="token comment"># 暴露一個 Port，讓外部可以存取 (8000 是 Flask 預設 Port)</span>
+EXPOSE 8000
+
+<span class="token comment"># 啟動 Flask 網頁應用程式</span>
+<span class="token comment"># CMD 會在容器啟動時執行這條命令</span>
+CMD <span class="token punctuation">[</span><span class="token string">"python"</span>, <span class="token string">"app.py"</span><span class="token punctuation">]</span>
+
+</code></pre>
+<h2 id="三、指令步驟與註解"><strong>三、指令步驟與註解</strong></h2>
+<p>以下是從頭到尾的 Docker 指令執行步驟：</p>
+<ol>
+<li>
+<p>建置 Docker 映像檔：</p>
+<p>在包含 <a href="http://app.py">app.py</a>、Dockerfile 和字型資料夾的目錄下執行此命令。</p>
+<p>Bash</p>
+<pre class=" language-bash"><code class="prism  language-bash">docker build --network host -t defect_report_generator <span class="token keyword">.</span>
+
+</code></pre>
+<ul>
+<li>
+<p><code>docker build</code>: 執行映像檔建置。</p>
+</li>
+<li>
+<p><code>--network host</code>: 在建置時使用主機網路，解決容器內無法連線下載套件的問題。</p>
+</li>
+<li>
+<p><code>-t defect_report_generator</code>: 為映像檔命名為 <code>defect_report_generator</code>。</p>
+</li>
+<li>
+<p><code>.</code>: 表示 Dockerfile 位於當前目錄。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>停止並移除舊容器：</p>
+<p>如果之前有運行舊的容器，需要先停止並移除，才能運行新的。</p>
+<p>Bash</p>
+<pre><code>docker stop defect_report_container
+docker rm defect_report_container
+
+</code></pre>
+</li>
+<li>
+<p>運行 Docker 容器：</p>
+<p>運行新的容器，並設定自動重啟和檔案掛載。</p>
+<p>Bash</p>
+<pre class=" language-bash"><code class="prism  language-bash">docker run -d --name defect_report_container \
+--restart unless-stopped \
+--mount type<span class="token operator">=</span>bind,source<span class="token operator">=</span>/mnt/raid0/image/tmp,target<span class="token operator">=</span>/mnt/raid0/image/tmp \
+-e EXCEL_FILE_PATH<span class="token operator">=</span><span class="token string">"/mnt/raid0/image/tmp/Incoming_Goods_Inspection_List_02072025.xlsx"</span> \
+-p 8082:8000 \
+defect_report_generator
+
+</code></pre>
+<ul>
+<li>
+<p><code>-d</code>: 在背景模式下運行容器。</p>
+</li>
+<li>
+<p><code>--name defect_report_container</code>: 為容器命名，方便管理。</p>
+</li>
+<li>
+<p><code>--restart unless-stopped</code>: 設定重啟策略，除非手動停止，否則容器會自動重啟。</p>
+</li>
+<li>
+<p><code>--mount ...</code>: 將 NAS 上的 Excel 檔案目錄掛載到容器內，讓腳本可以讀取資料。</p>
+</li>
+<li>
+<p><code>-e ...</code>: 設定環境變數，將 Excel 檔案路徑傳給腳本。</p>
+</li>
+<li>
+<p><code>-p 8082:8000</code>: 將主機的 <code>8082</code> port 映射到容器的 <code>8000</code> port。</p>
+</li>
+<li>
+<p><code>defect_report_generator</code>: 使用剛剛建置好的映像檔。</p>
+</li>
+</ul>
+</li>
+<li>
+<p>在瀏覽器中訪問報表：</p>
+<p>現在，每次在瀏覽器中訪問以下網址時，<a href="http://app.py">app.py</a> 腳本都會重新執行，生成最新的報表。</p>
+<pre><code>http://&lt;您的主機IP地址&gt;:8082
+
+</code></pre>
+</li>
+</ol>
+
+    </div>
+  </div>
+</body>
+
+</html>
