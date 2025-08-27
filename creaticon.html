@@ -1,0 +1,132 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>creaticon</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#🐧-ubuntu-.desktop-應用程式啟動筆記">🐧 Ubuntu .desktop 應用程式啟動筆記</a>
+<ul>
+<li><a href="#🎯-目標">🎯 目標</a></li>
+<li><a href="#📁-檔案結構">📁 檔案結構</a></li>
+<li><a href="#📝建立-.desktop-檔案內容">📝建立 .desktop 檔案內容</a></li>
+<li><a href="#🖥️-建立.sh-腳本內容">🖥️ 建立.sh 腳本內容</a></li>
+<li><a href="#🔐-權限設定">🔐 權限設定</a></li>
+<li><a href="#📌-dock-顯示步驟">📌 Dock 顯示步驟</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="🐧-ubuntu-.desktop-應用程式啟動筆記"><span class="prefix"></span><span class="content">🐧 Ubuntu <code>.desktop</code> 應用程式啟動筆記</span><span class="suffix"></span></h1>
+<h2 id="🎯-目標"><span class="prefix"></span><span class="content">🎯 目標</span><span class="suffix"></span></h2>
+<p>將自訂的 <code>.sh</code> 腳本包裝成 Ubuntu 桌面應用程式，並顯示在 Dock 上，達成 CLI 工具 GUI 化。</p>
+<hr>
+<h2 id="📁-檔案結構"><span class="prefix"></span><span class="content">📁 檔案結構</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">/home/deltawen/
+├── start_thunderbird.sh
+└── .local/share/applications/start_thunderbird.desktop
+
+/home/deltawen/iconpng/
+└── thunderbird_logo.png
+</code></pre>
+<hr>
+<h2 id="📝建立-.desktop-檔案內容"><span class="prefix"></span><span class="content">📝建立 <code>.desktop</code> 檔案內容</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">vi</span> ~/.local/share/applications/start_thunderbird.desktop
+</code></pre>
+<p>內容</p>
+<pre class=" language-ini"><code class="prism  language-ini"><span class="token selector">[Desktop Entry]</span>
+<span class="token constant">Name</span><span class="token attr-value"><span class="token punctuation">=</span>start_thunderbird</span>
+<span class="token constant">Exec</span><span class="token attr-value"><span class="token punctuation">=</span>/home/deltawen/start_thunderbird.sh</span>
+<span class="token constant">Icon</span><span class="token attr-value"><span class="token punctuation">=</span>/home/deltawen/iconpng/thunderbird_logo.png</span>
+<span class="token constant">Terminal</span><span class="token attr-value"><span class="token punctuation">=</span>false</span>
+<span class="token constant">Type</span><span class="token attr-value"><span class="token punctuation">=</span>Application</span>
+<span class="token constant">Categories</span><span class="token attr-value"><span class="token punctuation">=</span>Utility;</span>
+</code></pre>
+<h3 id="🔍-說明"><span class="prefix"></span><span class="content">🔍 說明</span><span class="suffix"></span></h3>
+
+<table>
+<thead>
+<tr>
+<th>欄位</th>
+<th>功能說明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Name</code></td>
+<td>顯示在 Dock 上的名稱</td>
+</tr>
+<tr>
+<td><code>Exec</code></td>
+<td>執行的腳本路徑</td>
+</tr>
+<tr>
+<td><code>Icon</code></td>
+<td>顯示圖示的路徑</td>
+</tr>
+<tr>
+<td><code>Terminal</code></td>
+<td>是否開啟終端機（此處為 false）</td>
+</tr>
+<tr>
+<td><code>Type</code></td>
+<td>類型為 Application</td>
+</tr>
+<tr>
+<td><code>Categories</code></td>
+<td>分類，可用於 GNOME 應用程式選單</td>
+</tr>
+</tbody>
+</table><hr>
+<h2 id="🖥️-建立.sh-腳本內容"><span class="prefix"></span><span class="content">🖥️ 建立<code>.sh</code> 腳本內容</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">vi</span> ~/start_thunderbird.sh
+</code></pre>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token shebang important">#!/bin/sh</span>
+thunderbird
+</code></pre>
+<hr>
+<h2 id="🔐-權限設定"><span class="prefix"></span><span class="content">🔐 權限設定</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">chmod</span> +x ~/start_thunderbird.sh
+<span class="token function">chmod</span> +x ~/.local/share/applications/start_thunderbird.desktop
+</code></pre>
+<hr>
+<h2 id="📌-dock-顯示步驟"><span class="prefix"></span><span class="content">📌 Dock 顯示步驟</span><span class="suffix"></span></h2>
+<ol>
+<li>儲存 <code>.desktop</code> 檔案</li>
+<li>在「應用程式選單」中搜尋 <code>start_thunderbird</code></li>
+<li>右鍵 → 加入最愛，即可固定在 Dock 上</li>
+</ol>
+<hr>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
