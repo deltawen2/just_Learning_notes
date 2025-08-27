@@ -4,11 +4,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>pythonindocker</title>
-  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+  <title>pythonindocker.md</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
 </head>
 
-<body class="stackedit">
+<body class="stackedit app--dark">
   <div class="stackedit__left">
     <div class="stackedit__toc">
       
@@ -26,9 +39,10 @@
   </div>
   <div class="stackedit__right">
     <div class="stackedit__html">
-      <h1 id="python-報表自動化與-docker-部署學習筆記"><strong>Python 報表自動化與 Docker 部署學習筆記</strong></h1>
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="python-報表自動化與-docker-部署學習筆記"><span class="prefix"></span><span class="content"><strong>Python 報表自動化與 Docker 部署學習筆記</strong></span><span class="suffix"></span></h1>
 <p>這份筆記記錄了如何將一個 Python 資料報表腳本，打包成 Docker 容器，並透過網頁伺服器提供服務，實現每次刷新網頁都能生成最新報表的功能。</p>
-<h2 id="一、專案架構"><strong>一、專案架構</strong></h2>
+<h2 id="一、專案架構"><span class="prefix"></span><span class="content"><strong>一、專案架構</strong></span><span class="suffix"></span></h2>
 <p>整個專案由三個核心檔案組成：</p>
 <ul>
 <li>
@@ -41,7 +55,7 @@
 <p><strong><code>Noto_Sans_TC/NotoSansTC-VariableFont_wght.ttf</code></strong>：圖表所需的字型檔，用於正確顯示中文字元。</p>
 </li>
 </ul>
-<h2 id="二、腳本內容與註解"><strong>二、腳本內容與註解</strong></h2>
+<h2 id="二、腳本內容與註解"><span class="prefix"></span><span class="content"><strong>二、腳本內容與註解</strong></span><span class="suffix"></span></h2>
 <p><strong><code>app.py</code> 內容</strong></p>
 <p>Python</p>
 <pre class=" language-py"><code class="prism  language-py"><span class="token keyword">import</span> pandas <span class="token keyword">as</span> pd
@@ -231,7 +245,7 @@ EXPOSE 8000
 CMD <span class="token punctuation">[</span><span class="token string">"python"</span>, <span class="token string">"app.py"</span><span class="token punctuation">]</span>
 
 </code></pre>
-<h2 id="三、指令步驟與註解"><strong>三、指令步驟與註解</strong></h2>
+<h2 id="三、指令步驟與註解"><span class="prefix"></span><span class="content"><strong>三、指令步驟與註解</strong></span><span class="suffix"></span></h2>
 <p>以下是從頭到尾的 Docker 指令執行步驟：</p>
 <ol>
 <li>
@@ -310,6 +324,7 @@ defect_report_generator
 </li>
 </ol>
 
+      </div>
     </div>
   </div>
 </body>
