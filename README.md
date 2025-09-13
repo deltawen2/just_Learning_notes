@@ -47,6 +47,8 @@
 > [systemctl服務](https://deltawen2.github.io/just_Learning_notes/systemctl.html)
 >
 > [creaticon](https://deltawen2.github.io/just_Learning_notes/creaticon.html)
+>
+> [kernel_install](https://deltawen2.github.io/just_Learning_notes/kernel_install.html)
 
 
 ## docker
