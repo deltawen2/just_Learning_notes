@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>kernel_install</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#🧰-安裝-xanmod-rt-核心並設為預設開機選項（完整流程）">🧰 安裝 XanMod RT 核心並設為預設開機選項（完整流程）</a>
+<ul>
+<li><a href="#🟩-步驟一：下載核心套件">🟩 步驟一：下載核心套件</a></li>
+<li><a href="#🟨-步驟二：安裝核心套件">🟨 步驟二：安裝核心套件</a></li>
+<li><a href="#🟦-步驟三：確認核心已安裝">🟦 步驟三：確認核心已安裝</a></li>
+<li><a href="#🟧-步驟四：設定-grub-預設開機核心">🟧 步驟四：設定 GRUB 預設開機核心</a></li>
+<li><a href="#🟥-步驟五：更新-grub-並重啟">🟥 步驟五：更新 GRUB 並重啟</a></li>
+<li><a href="#🟦-步驟六：確認是否成功載入-xanmod-核心">🟦 步驟六：確認是否成功載入 XanMod 核心</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="🧰-安裝-xanmod-rt-核心並設為預設開機選項（完整流程）"><span class="prefix"></span><span class="content">🧰 安裝 XanMod RT 核心並設為預設開機選項（完整流程）</span><span class="suffix"></span></h1>
+<h2 id="🟩-步驟一：下載核心套件"><span class="prefix"></span><span class="content">🟩 步驟一：下載核心套件</span><span class="suffix"></span></h2>
+<p>前往 XanMod 官方 SourceForge 頁面下載以下 <code>.deb</code> 套件：</p>
+<p>🔗 <a href="https://sourceforge.net/projects/xanmod/files/releases/rt/5.10.59-rt51-xanmod1/">XanMod RT 5.10.59-rt51-xanmod1</a></p>
+<p>下載以下三個檔案（64-bit）：</p>
+<ul>
+<li><code>linux-image-5.10.59-rt51-xanmod1_*.deb</code></li>
+<li><code>linux-headers-5.10.59-rt51-xanmod1_*.deb</code></li>
+<li><code>linux-libc-dev_*.deb</code>（可選）</li>
+</ul>
+<blockquote>
+<p>✅ 建議放在 <code>~/Downloads/xanmod</code> 資料夾中集中管理</p>
+</blockquote>
+<hr>
+<h2 id="🟨-步驟二：安裝核心套件"><span class="prefix"></span><span class="content">🟨 步驟二：安裝核心套件</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">cd</span> ~/Downloads/xanmod
+<span class="token function">sudo</span> dpkg -i *.deb
+<span class="token function">sudo</span> apt --fix-broken <span class="token function">install</span>
+</code></pre>
+<blockquote>
+<p>若有依賴錯誤，<code>--fix-broken</code> 會自動補齊</p>
+</blockquote>
+<hr>
+<h2 id="🟦-步驟三：確認核心已安裝"><span class="prefix"></span><span class="content">🟦 步驟三：確認核心已安裝</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">ls</span> /boot/vmlinuz-*
+</code></pre>
+<p>應看到：</p>
+<pre><code>/boot/vmlinuz-5.10.59-rt51-xanmod1
+</code></pre>
+<hr>
+<h2 id="🟧-步驟四：設定-grub-預設開機核心"><span class="prefix"></span><span class="content">🟧 步驟四：設定 GRUB 預設開機核心</span><span class="suffix"></span></h2>
+<p>編輯 GRUB 設定檔：</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> <span class="token function">nano</span> /etc/default/grub
+</code></pre>
+<p>修改以下行：</p>
+<pre class=" language-bash"><code class="prism  language-bash">GRUB_DEFAULT<span class="token operator">=</span><span class="token string">"Advanced options for Ubuntu&gt;Ubuntu, with Linux 5.10.59-rt51-xanmod1"</span>
+GRUB_TIMEOUT_STYLE<span class="token operator">=</span>menu
+GRUB_TIMEOUT<span class="token operator">=</span>5
+</code></pre>
+<blockquote>
+<p>✅ 使用名稱方式比索引更穩定，避免 GRUB 更新後順序改變</p>
+</blockquote>
+<hr>
+<h2 id="🟥-步驟五：更新-grub-並重啟"><span class="prefix"></span><span class="content">🟥 步驟五：更新 GRUB 並重啟</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">sudo</span> update-grub
+<span class="token function">sudo</span> <span class="token function">reboot</span>
+</code></pre>
+<hr>
+<h2 id="🟦-步驟六：確認是否成功載入-xanmod-核心"><span class="prefix"></span><span class="content">🟦 步驟六：確認是否成功載入 XanMod 核心</span><span class="suffix"></span></h2>
+<p>開機後執行：</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">uname</span> -r
+</code></pre>
+<p>預期輸出：</p>
+<pre><code>5.10.59-rt51-xanmod1
+</code></pre>
+<hr>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
