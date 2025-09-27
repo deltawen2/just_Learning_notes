@@ -1,0 +1,200 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>rclone</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--light">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#🧰-openwrt-使用-rclone-掛載-onedrive：完整流程筆記">🧰 OpenWRT 使用 rclone 掛載 OneDrive：完整流程筆記</a>
+<ul>
+<li><a href="#📦-第一步：安裝-rclone">📦 第一步：安裝 rclone</a></li>
+<li><a href="#🔐-第二步：設定-onedrive-remote">🔐 第二步：設定 OneDrive remote</a></li>
+<li><a href="#📂-第三步：建立掛載點">📂 第三步：建立掛載點</a></li>
+<li><a href="#🧲-第四步：手動掛載-onedrive">🧲 第四步：手動掛載 OneDrive</a></li>
+<li><a href="#🔁-第五步：設定開機自動掛載">🔁 第五步：設定開機自動掛載</a></li>
+<li><a href="#🧠-mermaid-流程圖">🧠 Mermaid 流程圖</a></li>
+<li><a href="#🎁-bonus-化建議">🎁 Bonus 化建議</a></li>
+<li><a href="#openwrt-掛載-onedrive-via-rclone">OpenWRT 掛載 OneDrive via rclone</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="🧰-openwrt-使用-rclone-掛載-onedrive：完整流程筆記"><span class="prefix"></span><span class="content">🧰 OpenWRT 使用 rclone 掛載 OneDrive：完整流程筆記</span><span class="suffix"></span></h1>
+<h2 id="📦-第一步：安裝-rclone"><span class="prefix"></span><span class="content">📦 第一步：安裝 rclone</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">opkg update
+opkg <span class="token function">install</span> rclone
+</code></pre>
+<p>✅ 安裝成功後可用 <code>rclone version</code> 檢查版本</p>
+<hr>
+<h2 id="🔐-第二步：設定-onedrive-remote"><span class="prefix"></span><span class="content">🔐 第二步：設定 OneDrive remote</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">rclone config
+</code></pre>
+<h3 id="設定流程："><span class="prefix"></span><span class="content">設定流程：</span><span class="suffix"></span></h3>
+<ol>
+<li><code>n</code> → 新增 remote</li>
+<li>Remote 名稱：輸入 <code>onedrive</code></li>
+<li>選擇雲端類型：輸入 <code>38</code>（OneDrive）</li>
+<li>Client ID / Secret：直接按 Enter 跳過</li>
+<li>選擇 OneDrive 類型：輸入 <code>1</code>（Global）</li>
+<li>tenant：個人帳號直接按 Enter 跳過</li>
+<li>授權方式：</li>
+</ol>
+<pre class=" language-bash"><code class="prism  language-bash">Use web browser to automatically authenticate rclone with remote?
+ * Say Y <span class="token keyword">if</span> the machine running rclone has a web browser you can use
+ * Say N <span class="token keyword">if</span> running rclone on a <span class="token punctuation">(</span>remote<span class="token punctuation">)</span> machine without web browser access
+If not sure try Y. If Y failed, try N.
+
+y<span class="token punctuation">)</span> Yes <span class="token punctuation">(</span>default<span class="token punctuation">)</span>
+n<span class="token punctuation">)</span> No
+y/n<span class="token operator">&gt;</span> n
+
+Option config_token.
+For this to work, you will need rclone available on a machine that has
+a web browser available.
+For <span class="token function">more</span> <span class="token function">help</span> and alternate methods see: https://rclone.org/remote_setup/
+Execute the following on the machine with the web browser <span class="token punctuation">(</span>same rclone
+version recommended<span class="token punctuation">)</span>:
+	rclone authorize <span class="token string">"onedrive"</span>
+Then <span class="token function">paste</span> the result.
+Enter a value.
+
+</code></pre>
+<pre><code> 在電腦上執行：
+    
+    ```bash
+    rclone authorize "onedrive"
+    ```
+</code></pre>
+<p>登入 OneDrive 並複製 token（包含 <code>{}</code>）<br>
+回到 OpenWRT 貼上 token</p>
+<ol start="8">
+<li><code>y</code> → 儲存設定</li>
+<li><code>q</code> → 離開設定</li>
+</ol>
+<p>✅ 完成後可用 <code>rclone ls onedrive:/</code> 測試連線</p>
+<hr>
+<h2 id="📂-第三步：建立掛載點"><span class="prefix"></span><span class="content">📂 第三步：建立掛載點</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">mkdir</span> -p /mnt/onedrive
+</code></pre>
+<hr>
+<h2 id="🧲-第四步：手動掛載-onedrive"><span class="prefix"></span><span class="content">🧲 第四步：手動掛載 OneDrive</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">rclone <span class="token function">mount</span> onedrive:/ /mnt/onedrive \
+  --copy-links \
+  --allow-other \
+  --allow-non-empty \
+  --umask 000 \
+  --daemon
+</code></pre>
+<p>✅ 用 <code>df -h</code> 或 <code>ls /mnt/onedrive</code> 檢查是否掛載成功</p>
+<hr>
+<h2 id="🔁-第五步：設定開機自動掛載"><span class="prefix"></span><span class="content">🔁 第五步：設定開機自動掛載</span><span class="suffix"></span></h2>
+<h3 id="建立啟動腳本-etcinit.drcloned"><span class="prefix"></span><span class="content">建立啟動腳本 <code>/etc/init.d/rcloned</code></span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">touch</span> /etc/init.d/rcloned
+<span class="token function">chmod</span> +x /etc/init.d/rcloned
+</code></pre>
+<h3 id="編輯內容："><span class="prefix"></span><span class="content">編輯內容：</span><span class="suffix"></span></h3>
+<pre class=" language-sh"><code class="prism  language-sh">#!/bin/sh /etc/rc.common
+# rclone OneDrive mount script for OpenWRT
+START=99
+STOP=10
+
+MOUNTPOINT="/mnt/onedrive"
+REMOTE="onedrive:/"
+
+start() {
+  echo "Starting rclone mount..."
+
+  [ -d "$MOUNTPOINT" ] || mkdir -p "$MOUNTPOINT"
+
+  mountpoint -q "$MOUNTPOINT" &amp;&amp; {
+    echo "$MOUNTPOINT already mounted."
+    return 0
+  }
+
+  rclone mount "$REMOTE" "$MOUNTPOINT" \
+    --copy-links \
+    --allow-other \
+    --allow-non-empty \
+    --umask 000 \
+    --daemon
+
+  echo "Mounted $REMOTE to $MOUNTPOINT"
+}
+
+stop() {
+  echo "Stopping rclone mount..."
+  umount "$MOUNTPOINT" &amp;&amp; echo "Unmounted $MOUNTPOINT"
+}
+</code></pre>
+<h3 id="啟用開機自動掛載："><span class="prefix"></span><span class="content">啟用開機自動掛載：</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash">/etc/init.d/rcloned <span class="token function">enable</span>
+</code></pre>
+<p>✅ 手動啟動：<code>/etc/init.d/rcloned start</code><br>
+✅ 手動卸載：<code>/etc/init.d/rcloned stop</code></p>
+<hr>
+<h2 id="🧠-mermaid-流程圖"><span class="prefix"></span><span class="content">🧠 Mermaid 流程圖</span><span class="suffix"></span></h2>
+<pre class=" language-mermaid"><svg id="mermaid-svg-Tb584C2QTdhlyqLH" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="643.03125" style="max-width: 217.390625px;" viewBox="0 0 217.390625 643.03125"><style>#mermaid-svg-Tb584C2QTdhlyqLH{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;fill:#000000;}#mermaid-svg-Tb584C2QTdhlyqLH .error-icon{fill:#552222;}#mermaid-svg-Tb584C2QTdhlyqLH .error-text{fill:#552222;stroke:#552222;}#mermaid-svg-Tb584C2QTdhlyqLH .edge-thickness-normal{stroke-width:2px;}#mermaid-svg-Tb584C2QTdhlyqLH .edge-thickness-thick{stroke-width:3.5px;}#mermaid-svg-Tb584C2QTdhlyqLH .edge-pattern-solid{stroke-dasharray:0;}#mermaid-svg-Tb584C2QTdhlyqLH .edge-pattern-dashed{stroke-dasharray:3;}#mermaid-svg-Tb584C2QTdhlyqLH .edge-pattern-dotted{stroke-dasharray:2;}#mermaid-svg-Tb584C2QTdhlyqLH .marker{fill:#666;stroke:#666;}#mermaid-svg-Tb584C2QTdhlyqLH .marker.cross{stroke:#666;}#mermaid-svg-Tb584C2QTdhlyqLH svg{font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:16px;}#mermaid-svg-Tb584C2QTdhlyqLH .label{font-family:"trebuchet ms",verdana,arial,sans-serif;color:#000000;}#mermaid-svg-Tb584C2QTdhlyqLH .cluster-label text{fill:#333;}#mermaid-svg-Tb584C2QTdhlyqLH .cluster-label span{color:#333;}#mermaid-svg-Tb584C2QTdhlyqLH .label text,#mermaid-svg-Tb584C2QTdhlyqLH span{fill:#000000;color:#000000;}#mermaid-svg-Tb584C2QTdhlyqLH .node rect,#mermaid-svg-Tb584C2QTdhlyqLH .node circle,#mermaid-svg-Tb584C2QTdhlyqLH .node ellipse,#mermaid-svg-Tb584C2QTdhlyqLH .node polygon,#mermaid-svg-Tb584C2QTdhlyqLH .node path{fill:#eee;stroke:#999;stroke-width:1px;}#mermaid-svg-Tb584C2QTdhlyqLH .node .label{text-align:center;}#mermaid-svg-Tb584C2QTdhlyqLH .node.clickable{cursor:pointer;}#mermaid-svg-Tb584C2QTdhlyqLH .arrowheadPath{fill:#333333;}#mermaid-svg-Tb584C2QTdhlyqLH .edgePath .path{stroke:#666;stroke-width:1.5px;}#mermaid-svg-Tb584C2QTdhlyqLH .flowchart-link{stroke:#666;fill:none;}#mermaid-svg-Tb584C2QTdhlyqLH .edgeLabel{background-color:white;text-align:center;}#mermaid-svg-Tb584C2QTdhlyqLH .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mermaid-svg-Tb584C2QTdhlyqLH .cluster rect{fill:hsl(210,66.6666666667%,95%);stroke:#26a;stroke-width:1px;}#mermaid-svg-Tb584C2QTdhlyqLH .cluster text{fill:#333;}#mermaid-svg-Tb584C2QTdhlyqLH .cluster span{color:#333;}#mermaid-svg-Tb584C2QTdhlyqLH div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:"trebuchet ms",verdana,arial,sans-serif;font-size:12px;background:hsl(-160,0%,93.3333333333%);border:1px solid #26a;border-radius:2px;pointer-events:none;z-index:100;}#mermaid-svg-Tb584C2QTdhlyqLH:root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#mermaid-svg-Tb584C2QTdhlyqLH flowchart{fill:apa;}</style><g><g class="output"><g class="clusters"></g><g class="edgePaths"><g class="edgePath LS-A LE-B" id="L-A-B" style="opacity: 1;"><path class="path" d="M108.6953125,54.71875L108.6953125,79.71875L108.6953125,104.71875" marker-end="url(http://0.0.0.0:8082/app#arrowhead19)" style="fill:none"></path><defs><marker id="arrowhead19" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowheadPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker></defs></g><g class="edgePath LS-B LE-C" id="L-B-C" style="opacity: 1;"><path class="path" d="M108.6953125,151.4375L108.6953125,176.4375L108.6953125,201.4375" marker-end="url(http://0.0.0.0:8082/app#arrowhead20)" style="fill:none"></path><defs><marker id="arrowhead20" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowheadPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker></defs></g><g class="edgePath LS-C LE-D" id="L-C-D" style="opacity: 1;"><path class="path" d="M108.6953125,248.15625L108.6953125,273.15625L108.6953125,298.15625" marker-end="url(http://0.0.0.0:8082/app#arrowhead21)" style="fill:none"></path><defs><marker id="arrowhead21" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowheadPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker></defs></g><g class="edgePath LS-D LE-E" id="L-D-E" style="opacity: 1;"><path class="path" d="M108.6953125,344.875L108.6953125,369.875L108.6953125,394.875" marker-end="url(http://0.0.0.0:8082/app#arrowhead22)" style="fill:none"></path><defs><marker id="arrowhead22" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowheadPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker></defs></g><g class="edgePath LS-E LE-F" id="L-E-F" style="opacity: 1;"><path class="path" d="M108.6953125,441.59375L108.6953125,466.59375L108.6953125,491.59375" marker-end="url(http://0.0.0.0:8082/app#arrowhead23)" style="fill:none"></path><defs><marker id="arrowhead23" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowheadPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker></defs></g><g class="edgePath LS-F LE-G" id="L-F-G" style="opacity: 1;"><path class="path" d="M108.6953125,538.3125L108.6953125,563.3125L108.6953125,588.3125" marker-end="url(http://0.0.0.0:8082/app#arrowhead24)" style="fill:none"></path><defs><marker id="arrowhead24" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="strokeWidth" markerWidth="8" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowheadPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker></defs></g></g><g class="edgeLabels"><g class="edgeLabel" transform="" style="opacity: 1;"><g transform="translate(0,0)" class="label"><rect rx="0" ry="0" width="0" height="0"></rect><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span id="L-L-A-B" class="edgeLabel L-LS-A' L-LE-B"></span></div></foreignObject></g></g><g class="edgeLabel" transform="" style="opacity: 1;"><g transform="translate(0,0)" class="label"><rect rx="0" ry="0" width="0" height="0"></rect><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span id="L-L-B-C" class="edgeLabel L-LS-B' L-LE-C"></span></div></foreignObject></g></g><g class="edgeLabel" transform="" style="opacity: 1;"><g transform="translate(0,0)" class="label"><rect rx="0" ry="0" width="0" height="0"></rect><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span id="L-L-C-D" class="edgeLabel L-LS-C' L-LE-D"></span></div></foreignObject></g></g><g class="edgeLabel" transform="" style="opacity: 1;"><g transform="translate(0,0)" class="label"><rect rx="0" ry="0" width="0" height="0"></rect><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span id="L-L-D-E" class="edgeLabel L-LS-D' L-LE-E"></span></div></foreignObject></g></g><g class="edgeLabel" transform="" style="opacity: 1;"><g transform="translate(0,0)" class="label"><rect rx="0" ry="0" width="0" height="0"></rect><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span id="L-L-E-F" class="edgeLabel L-LS-E' L-LE-F"></span></div></foreignObject></g></g><g class="edgeLabel" transform="" style="opacity: 1;"><g transform="translate(0,0)" class="label"><rect rx="0" ry="0" width="0" height="0"></rect><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;"><span id="L-L-F-G" class="edgeLabel L-LS-F' L-LE-G"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default" id="flowchart-A-206" transform="translate(108.6953125,31.359375)" style="opacity: 1;"><rect rx="0" ry="0" x="-50.015625" y="-23.359375" width="100.03125" height="46.71875" class="label-container"></rect><g class="label" transform="translate(0,0)"><g transform="translate(-40.015625,-13.359375)"><foreignObject width="80.03125" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;">安裝 rclone</div></foreignObject></g></g></g><g class="node default" id="flowchart-B-207" transform="translate(108.6953125,128.078125)" style="opacity: 1;"><rect rx="0" ry="0" x="-88.2578125" y="-23.359375" width="176.515625" height="46.71875" class="label-container"></rect><g class="label" transform="translate(0,0)"><g transform="translate(-78.2578125,-13.359375)"><foreignObject width="156.515625" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;">設定 remote: onedrive</div></foreignObject></g></g></g><g class="node default" id="flowchart-C-209" transform="translate(108.6953125,224.796875)" style="opacity: 1;"><rect rx="0" ry="0" x="-63.796875" y="-23.359375" width="127.59375" height="46.71875" class="label-container"></rect><g class="label" transform="translate(0,0)"><g transform="translate(-53.796875,-13.359375)"><foreignObject width="107.59375" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;">授權取得 token</div></foreignObject></g></g></g><g class="node default" id="flowchart-D-211" transform="translate(108.6953125,321.515625)" style="opacity: 1;"><rect rx="0" ry="0" x="-100.6953125" y="-23.359375" width="201.390625" height="46.71875" class="label-container"></rect><g class="label" transform="translate(0,0)"><g transform="translate(-90.6953125,-13.359375)"><foreignObject width="181.390625" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;">建立掛載點 /mnt/onedrive</div></foreignObject></g></g></g><g class="node default" id="flowchart-E-213" transform="translate(108.6953125,418.234375)" style="opacity: 1;"><rect rx="0" ry="0" x="-58.0078125" y="-23.359375" width="116.015625" height="46.71875" class="label-container"></rect><g class="label" transform="translate(0,0)"><g transform="translate(-48.0078125,-13.359375)"><foreignObject width="96.015625" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;">手動測試掛載</div></foreignObject></g></g></g><g class="node default" id="flowchart-F-215" transform="translate(108.6953125,514.953125)" style="opacity: 1;"><rect rx="0" ry="0" x="-88.703125" y="-23.359375" width="177.40625" height="46.71875" class="label-container"></rect><g class="label" transform="translate(0,0)"><g transform="translate(-78.703125,-13.359375)"><foreignObject width="157.40625" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;">建立 /etc/init.d/rcloned</div></foreignObject></g></g></g><g class="node default" id="flowchart-G-217" transform="translate(108.6953125,611.671875)" style="opacity: 1;"><rect rx="0" ry="0" x="-74.0078125" y="-23.359375" width="148.015625" height="46.71875" class="label-container"></rect><g class="label" transform="translate(0,0)"><g transform="translate(-64.0078125,-13.359375)"><foreignObject width="128.015625" height="26.71875"><div xmlns="http://www.w3.org/1999/xhtml" style="display: inline-block; white-space: nowrap;">設定開機自動掛載</div></foreignObject></g></g></g></g></g></g></svg></pre>
+<hr>
+<h2 id="🎁-bonus-化建議"><span class="prefix"></span><span class="content">🎁 Bonus 化建議</span><span class="suffix"></span></h2>
+<h3 id="📝-技術筆記模板"><span class="prefix"></span><span class="content">📝 技術筆記模板</span><span class="suffix"></span></h3>
+<h2 id="openwrt-掛載-onedrive-via-rclone"><span class="prefix"></span><span class="content">OpenWRT 掛載 OneDrive via rclone</span><span class="suffix"></span></h2>
+<h3 id="掛載點"><span class="prefix"></span><span class="content">掛載點</span><span class="suffix"></span></h3>
+<ul>
+<li><code>/mnt/onedrive</code></li>
+</ul>
+<h3 id="remote-名稱"><span class="prefix"></span><span class="content">remote 名稱</span><span class="suffix"></span></h3>
+<ul>
+<li><code>onedrive</code></li>
+</ul>
+<h3 id="掛載命令"><span class="prefix"></span><span class="content">掛載命令</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash">rclone <span class="token function">mount</span> onedrive:/ /mnt/onedrive --daemon <span class="token punctuation">..</span>.
+</code></pre>
+<h3 id="開機啟動腳本"><span class="prefix"></span><span class="content">開機啟動腳本</span><span class="suffix"></span></h3>
+<ul>
+<li><code>/etc/init.d/rcloned</code></li>
+</ul>
+<h3 id="常用指令"><span class="prefix"></span><span class="content">常用指令</span><span class="suffix"></span></h3>
+<ul>
+<li>啟動：<code>/etc/init.d/rcloned start</code></li>
+<li>停止：<code>/etc/init.d/rcloned stop</code></li>
+<li>開機啟動：<code>/etc/init.d/rcloned enable</code></li>
+</ul>
+<h3 id="🩺-健康檢查建議"><span class="prefix"></span><span class="content">🩺 健康檢查建議</span><span class="suffix"></span></h3>
+<ul>
+<li><code>rclone ls onedrive:/</code> → 測試連線</li>
+<li><code>mount | grep onedrive</code> → 檢查掛載</li>
+<li><code>logread | grep rclone</code> → 檢查錯誤</li>
+</ul>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
