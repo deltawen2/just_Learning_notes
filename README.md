@@ -12,7 +12,7 @@
 >
 > [find](https://deltawen2.github.io/just_Learning_notes/find.html)
 >
-> [網路架設](https://deltawen2.github.io/just_Learning_notes/架設區網網站.html)
+> [架設區網網站](https://deltawen2.github.io/just_Learning_notes/架設區網網站.html)
 
 
 
