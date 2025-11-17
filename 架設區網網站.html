@@ -1,0 +1,119 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>架設區網網站.md</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#openwrt-架設區域網頁">OpenWrt 架設區域網頁</a></li>
+<li><a href="#ubuntu架設區域網頁">ubuntu架設區域網頁</a>
+<ul>
+<li><a href="#其他電腦上透過網路存取這台">其他電腦上透過網路存取這台</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="openwrt-架設區域網頁"><span class="prefix"></span><span class="content">OpenWrt 架設區域網頁</span><span class="suffix"></span></h1>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#安裝HTTP 伺服器uhttpd &lt;資源輕量&gt;</span>
+opkg update  
+opkg <span class="token function">install</span> uhttpd  
+<span class="token comment">#設定開機自動啟動</span>
+/etc/init.d/uhttpd <span class="token function">enable</span>  
+<span class="token comment">#立即啟動網頁伺服器</span>
+/etc/init.d/uhttpd start  
+
+  
+
+<span class="token comment">#把檔案傳到192.168.99.3的/www目錄</span>
+
+<span class="token function">scp</span> -O PID.html root@192.168.99.3:/www/
+</code></pre>
+<blockquote>
+<p>透過  <strong>192.168.99.3/PID.html</strong> 就可以訪問了</p>
+</blockquote>
+<h1 id="ubuntu架設區域網頁"><span class="prefix"></span><span class="content">ubuntu架設區域網頁</span><span class="suffix"></span></h1>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#安裝 Apache HTTP Server</span>
+<span class="token function">sudo</span> apt update
+<span class="token function">sudo</span> apt <span class="token function">install</span> apache2
+<span class="token comment">#調整防火牆</span>
+<span class="token function">sudo</span> ufw app list
+</code></pre>
+<blockquote>
+<p>你會看到類似以下的輸出：</p>
+</blockquote>
+<pre><code>Available applications:
+  Apache
+  Apache Full
+  Apache Secure
+  OpenSSH
+</code></pre>
+<blockquote>
+<p>Apache: 只開放 Port 80 (HTTP)。<br>
+Apache Full: 開放 Port 80 (HTTP) 和 Port 443 (HTTPS)。<br>
+Apache Secure: 只開放 Port 443 (HTTPS)。</p>
+</blockquote>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment">#防火牆允許Apache Full</span>
+<span class="token function">sudo</span> ufw allow <span class="token string">'Apache Full'</span>
+<span class="token comment">#確認防火牆狀態</span>
+<span class="token function">sudo</span> ufw status
+<span class="token comment">#如果防火牆是關閉的，你可以啟用它</span>
+<span class="token function">sudo</span> ufw <span class="token function">enable</span>
+<span class="token comment"># 檢查服務狀態</span>
+<span class="token function">sudo</span> systemctl status apache2
+
+</code></pre>
+<blockquote>
+<p>要停止服務：sudo systemctl stop apache2<br>
+要啟動服務：sudo systemctl start apache2<br>
+要重啟服務：sudo systemctl restart apache2<br>
+要重新載入配置而不中斷服務：sudo systemctl reload apache2</p>
+</blockquote>
+<h2 id="其他電腦上透過網路存取這台"><span class="prefix"></span><span class="content">其他電腦上透過網路存取這台</span><span class="suffix"></span></h2>
+<p><a href="http://192.168.99.7">http://192.168.99.7</a></p>
+<h3 id="放置你的網頁內容"><span class="prefix"></span><span class="content">放置你的網頁內容</span><span class="suffix"></span></h3>
+<blockquote>
+<p>網站的預設根目錄是<br>
+/var/www/html<br>
+你可以把你自己的網頁檔案 (例如 index.html, styles.css, script.js 等) 放到這個目錄下</p>
+</blockquote>
+<p>設定檔目錄：</p>
+<pre><code>主設定檔：/etc/apache2/apache2.conf
+埠監聽設定：/etc/apache2/ports.conf (定義 Apache 監聽哪些網路埠，例如 Port 80 和 Port 443)
+虛擬主機設定：/etc/apache2/sites-available/ (存放可用的虛擬主機設定檔)
+啟用網站設定：/etc/apache2/sites-enabled/ (指向 /etc/apache2/sites-available/ 中已啟用的設定檔)
+模組設定：/etc/apache2/mods-available/ (存放可用的模組設定檔)
+啟用模組設定：/etc/apache2/mods-enabled/ (指向 /etc/apache2/mods-available/ 中已啟用的設定檔)
+</code></pre>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
