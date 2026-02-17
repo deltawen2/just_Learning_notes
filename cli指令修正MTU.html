@@ -1,0 +1,73 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>cli指令修正MTU</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#openwrt-pppoe-網路載入最佳化說明書">OpenWrt PPPoE 網路載入最佳化說明書</a>
+<ul>
+<li><a href="#🔍-問題描述">🔍 問題描述</a></li>
+<li><a href="#🛠️-cli-修正步驟">🛠️ CLI 修正步驟</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="openwrt-pppoe-網路載入最佳化說明書"><span class="prefix"></span><span class="content">OpenWrt PPPoE 網路載入最佳化說明書</span><span class="suffix"></span></h1>
+<h2 id="🔍-問題描述"><span class="prefix"></span><span class="content">🔍 問題描述</span><span class="suffix"></span></h2>
+<p>使用 OpenWrt 進行中華電信 PPPoE 撥號時，常因 MTU 限制導致網頁圖片載入緩慢或轉圈圈。</p>
+<h2 id="🛠️-cli-修正步驟"><span class="prefix"></span><span class="content">🛠️ CLI 修正步驟</span><span class="suffix"></span></h2>
+<h3 id="寫入-mss-修正腳本"><span class="prefix"></span><span class="content">1. 寫入 MSS 修正腳本</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token keyword">echo</span> <span class="token string">"nft add rule inet fw4 forward tcp flags syn tcp option maxseg size set rt mtu"</span> <span class="token operator">&gt;&gt;</span> /etc/firewall.user
+</code></pre>
+<h3 id="配置防火牆載入自定義規則"><span class="prefix"></span><span class="content">2.配置防火牆載入自定義規則</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash">uci add firewall include
+uci <span class="token keyword">set</span> firewall.@include<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.path<span class="token operator">=</span><span class="token string">'/etc/firewall.user'</span>
+uci <span class="token keyword">set</span> firewall.@include<span class="token punctuation">[</span>-1<span class="token punctuation">]</span>.fw4_compatible<span class="token operator">=</span><span class="token string">'1'</span>
+uci commit firewall
+/etc/init.d/firewall restart
+</code></pre>
+<h3 id="恢復-wan-介面自動-mtu"><span class="prefix"></span><span class="content">3.恢復 WAN 介面自動 MTU</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash">uci del network.wan.mtu
+uci commit network
+<span class="token function">ifdown</span> wan <span class="token operator">&amp;&amp;</span> <span class="token function">ifup</span> wan
+</code></pre>
+<h3 id="✅-驗證指令"><span class="prefix"></span><span class="content">✅ 驗證指令</span><span class="suffix"></span></h3>
+<pre class=" language-bash"><code class="prism  language-bash">nft list table inet fw4 <span class="token operator">|</span> <span class="token function">grep</span> <span class="token string">"tcp flags syn"</span>
+</code></pre>
+<blockquote>
+<p>應出現：tcp flags syn tcp option maxseg size set rt mtu</p>
+</blockquote>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
