@@ -37,7 +37,7 @@
 >
 > [rclone_掛載onedrive](https://deltawen2.github.io/just_Learning_notes/rclone_openwrt.html)
 >
->[經典的 OpenWrt PPPoE MTU 陷阱](https://deltawen2.github.io/just_Learning_notes/%E7%B6%93%E5%85%B8%E7%9A%84%20OpenWrt%20PPPoE%20MTU%20%E9%99%B7%E9%98%B1.html)
+>[經典的 OpenWrt PPPoE MTU 陷阱造成網頁載入延遲](https://deltawen2.github.io/just_Learning_notes/%E7%B6%93%E5%85%B8%E7%9A%84%20OpenWrt%20PPPoE%20MTU%20%E9%99%B7%E9%98%B1.html)
 
 
 
