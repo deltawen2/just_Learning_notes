@@ -1,0 +1,146 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>經典的 OpenWrt PPPoE MTU 陷阱</title>
+  <link rel="stylesheet" href="https://stackedit.cn/style.css" />
+  <style type="text/css">
+    .app--dark {
+      background-color: #444;
+    }
+    .app--dark .stackedit__html {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    .app--dark .stackedit__content {
+      padding: 1px 20px 20px;
+    }
+    
+  </style>
+</head>
+
+<body class="stackedit app--dark">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#經典的-openwrt-pppoe-mtu-陷阱">經典的 OpenWrt PPPoE MTU 陷阱</a>
+<ul>
+<li><a href="#物理層設定-physical-device">1. 物理層設定 (Physical Device)</a></li>
+<li><a href="#撥號層設定-pppoe-interface">2. 撥號層設定 (PPPoE Interface)</a></li>
+<li><a href="#防火牆-mss-修正-mss-clamping">3. 防火牆 MSS 修正 (MSS Clamping)</a></li>
+<li><a href="#套用並永久生效">4. 套用並永久生效</a></li>
+<li><a href="#相關底層文件">相關底層文件</a></li>
+<li><a href="#驗證指令-ubuntu">驗證指令 (Ubuntu)</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <div class="stackedit__content preview-theme--default">
+        <h1 id="經典的-openwrt-pppoe-mtu-陷阱"><span class="prefix"></span><span class="content">經典的 <strong>OpenWrt PPPoE MTU 陷阱</strong></span><span class="suffix"></span></h1>
+<p>當物理層（MTU 1500）沒有明確宣告或被意外限制時，PPPoE 撥號層（MTU 1492）加上 8 bytes 標頭後會因為總長度超過物理極限而被捨棄，導致 App 載入緩慢或網頁打不開</p>
+<blockquote>
+<p>以下是針對 <strong>中華電信光世代 (PPPoE)</strong> 在 OpenWrt CLI 上的完整正確設定說明：</p>
+</blockquote>
+<h2 id="物理層設定-physical-device"><span class="prefix"></span><span class="content">1. 物理層設定 (Physical Device)</span><span class="suffix"></span></h2>
+<p>必須確保物理網卡（eth1）有足夠的 <strong>1500 bytes</strong> 空間來封裝 PPPoE 封包</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 建立/修正物理裝置 eth1 的定義</span>
+uci <span class="token keyword">set</span> network.eth1_dev<span class="token operator">=</span>device
+uci <span class="token keyword">set</span> network.eth1_dev.name<span class="token operator">=</span><span class="token string">'eth1'</span>
+uci <span class="token keyword">set</span> network.eth1_dev.mtu<span class="token operator">=</span><span class="token string">'1500'</span>
+
+</code></pre>
+<h2 id="撥號層設定-pppoe-interface"><span class="prefix"></span><span class="content">2. 撥號層設定 (PPPoE Interface)</span><span class="suffix"></span></h2>
+<p>設定撥號介面使用 <strong>1492</strong>，這是光世代標準的 MTU 值</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 設定 WAN 介面使用 pppoe 並指定 MTU</span>
+uci <span class="token keyword">set</span> network.wan.proto<span class="token operator">=</span><span class="token string">'pppoe'</span>
+uci <span class="token keyword">set</span> network.wan.device<span class="token operator">=</span><span class="token string">'eth1'</span>
+uci <span class="token keyword">set</span> network.wan.mtu<span class="token operator">=</span><span class="token string">'1492'</span>
+
+</code></pre>
+<h2 id="防火牆-mss-修正-mss-clamping"><span class="prefix"></span><span class="content">3. 防火牆 MSS 修正 (MSS Clamping)</span><span class="suffix"></span></h2>
+<p>這是最關鍵的一步<br>
+它會攔截 TCP 連線並自動將 MSS (Maximum Segment Size) 修正為 <strong>1452</strong> (1492 - 40)<br>
+防止封包在中途被丟棄</p>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 啟用 WAN 區域的 MTU 修正 (mss clamping)</span>
+uci <span class="token keyword">set</span> firewall.@zone<span class="token punctuation">[</span>1<span class="token punctuation">]</span>.mtu_fix<span class="token operator">=</span><span class="token string">'1'</span> 
+<span class="token comment"># 註：通常 @zone[1] 是 wan，如果不確定可用 uci show firewall 檢查</span>
+
+</code></pre>
+<h2 id="套用並永久生效"><span class="prefix"></span><span class="content">4. 套用並永久生效</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token comment"># 提交設定</span>
+uci commit network
+uci commit firewall
+
+<span class="token comment"># 重啟網路與防火牆</span>
+/etc/init.d/network restart
+/etc/init.d/firewall restart
+
+</code></pre>
+<h2 id="相關底層文件"><span class="prefix"></span><span class="content">相關底層文件</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash">root@OpenWrt:/etc/config<span class="token comment"># cat network</span>
+
+config interface <span class="token string">'wan'</span>
+	option device <span class="token string">'eth1'</span>
+	option proto <span class="token string">'pppoe'</span>
+	option username <span class="token string">'xxxxxx@hinet.net'</span>
+	option password <span class="token string">'xxxxxxx'</span>
+	option ipv6 <span class="token string">'auto'</span>
+	option mtu <span class="token string">'1492'</span>
+	option norelease <span class="token string">'1'</span>
+
+config interface <span class="token string">'wan6'</span>
+	option device <span class="token string">'eth1'</span>
+	option proto <span class="token string">'dhcpv6'</span>
+
+config device <span class="token string">'eth1_dev'</span>
+	option name <span class="token string">'eth1'</span>
+	option mtu <span class="token string">'1500'</span>
+
+
+
+
+</code></pre>
+<pre class=" language-bash"><code class="prism  language-bash">root@OpenWrt:/etc/config<span class="token comment"># cat firewall</span>
+
+config defaults
+	option syn_flood <span class="token string">'1'</span>
+	option input <span class="token string">'REJECT'</span>
+	option output <span class="token string">'ACCEPT'</span>
+	option forward <span class="token string">'ACCEPT'</span>
+
+config zone
+	option name <span class="token string">'lan'</span>
+	list network <span class="token string">'lan'</span>
+	option input <span class="token string">'ACCEPT'</span>
+	option output <span class="token string">'ACCEPT'</span>
+	option forward <span class="token string">'ACCEPT'</span>
+
+config zone
+	option name <span class="token string">'wan'</span>
+	list network <span class="token string">'wan'</span>
+	list network <span class="token string">'wan6'</span>
+	option input <span class="token string">'REJECT'</span>
+	option output <span class="token string">'ACCEPT'</span>
+	option forward <span class="token string">'REJECT'</span>
+	option masq <span class="token string">'1'</span>
+	option mtu_fix <span class="token string">'1'</span>
+
+</code></pre>
+<h2 id="驗證指令-ubuntu"><span class="prefix"></span><span class="content">驗證指令 (Ubuntu)</span><span class="suffix"></span></h2>
+<pre class=" language-bash"><code class="prism  language-bash"><span class="token function">ping</span> -M <span class="token keyword">do</span> -s 1464 8.8.8.8
+
+</code></pre>
+
+      </div>
+    </div>
+  </div>
+</body>
+
+</html>
