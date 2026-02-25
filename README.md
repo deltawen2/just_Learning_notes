@@ -37,7 +37,7 @@
 >
 > [rclone_掛載onedrive](https://deltawen2.github.io/just_Learning_notes/rclone_openwrt.html)
 >
-> [cli指令修正MTU](https://deltawen2.github.io/just_Learning_notes/cli指令修正MTU.html)
+> [經典的 OpenWrt PPPoE MTU 陷阱](https://deltawen2.github.io/just_Learning_notes/經典的 OpenWrt PPPoE MTU 陷阱.html)
 
 
 
